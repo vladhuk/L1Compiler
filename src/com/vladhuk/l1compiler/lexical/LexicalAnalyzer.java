@@ -58,13 +58,12 @@ public class LexicalAnalyzer {
         return lexems.toString();
     }
 
-    public static File parse(Path source, Path destination) throws IOException {
-        final File file = destination.toFile();
-        if (file.createNewFile()) {
-            Files.writeString(destination, parse(Files.readString(source)));
-        }
-        return file;
+    public static void parse(Path source, Path destination) throws IOException {
+        Files.writeString(destination, parse(Files.readString(source)));
     }
 
+    public static void parse(File source, File destination) throws IOException {
+        parse(source.toPath(), destination.toPath());
+    }
 
 }
