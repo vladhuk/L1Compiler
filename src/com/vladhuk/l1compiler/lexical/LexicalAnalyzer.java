@@ -4,19 +4,27 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.vladhuk.l1compiler.lexical.Token.*;
 
 public class LexicalAnalyzer {
 
     public static String parse(String text) {
-        final List<String> rows = Arrays.asList(text.split("\n+"));
+        final List<String> rows = Stream.of(text.split("\n"))
+                .filter(str -> !str.isBlank())
+                .collect(Collectors.toList());
         final StringBuilder lexems = new StringBuilder();
 
         for (int i = 0; i < rows.size(); i++) {
-            final List<String> elements = Arrays.asList(rows.get(i).split("\\s+"));
+            final List<String> elements = Stream.of(rows.get(i).split("\\s+"
+//                                                                              + "|(?=-|\\+|==|/|\\*|<=|>=|<|>|=|\\(|\\)|\\.|:|\\^)"
+//                                                                              + "|(?<=-|\\+|==|/|\\*|<=|>=|<|>|=|\\(|\\)|\\.|:|\\^)"
+            ))
+                    .filter(str -> !str.isBlank())
+                    .collect(Collectors.toList());
 
             for (String element : elements) {
                 Token token = UNKNOWN;
@@ -25,8 +33,6 @@ public class LexicalAnalyzer {
                     token = DECLARATION;
                 } else if (element.matches("for|while|to|do|end")) {
                     token = LOOP;
-                } else if (element.matches("[a-zA-Z]+\\w*")) {
-                    token = IDENTIFIER;
                 } else if (element.matches("true|false|'.*'|\\d+((\\.\\d+)|((\\.\\d+)?e[+-]\\d+))?")) {
                     token = LITERAL;
                 } else if (element.matches("if|else|then")) {
@@ -49,9 +55,11 @@ public class LexicalAnalyzer {
                     token = BRACKET_OP;
                 } else if (element.matches("[.':]")) {
                     token = SYMBOL;
+                } else if (element.matches("[a-zA-Z]+\\w*")) {
+                    token = IDENTIFIER;
                 }
 
-                lexems.append(String.format("%5s %15s %d", element, token.name(), i));
+                lexems.append(String.format("%-15s %-15s %d\n", element, token.name(), i));
             }
         }
 
