@@ -24,7 +24,7 @@ end
 
 val x = (a + b)^2 * 3.2e-1 + 3e+2 / 1.5
 val str1:string='Hello world'
-val str2:string = 'Hello world'
+val str2:string = ''
 val bool2 =bool != true
 val bool3 = -1 <= +1
 val bool4= 1 > 1
