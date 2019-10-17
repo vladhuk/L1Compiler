@@ -8,8 +8,8 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        final File source = new File("D:/L1_source.txt");
-        final File lexems = new File("D:/L1_lexems.txt");
+        final File source = new File(Main.class.getClassLoader().getResource("test-src/L1_source.txt").getPath());
+        final File lexems = new File("L1_lexems.txt");
 
         if (!lexems.exists()) {
             lexems.createNewFile();
