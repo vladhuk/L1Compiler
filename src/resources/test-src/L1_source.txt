@@ -1,21 +1,20 @@
-val a:number = 5
-var b = a
-val bool:boolean = true
+val a:number =  5
+var b=a
+val bool1:boolean = true
+
 
 if a == b
 then
-	b = 1
-	goto endif1
-else if bool
-	b = 0
-	goto endif1
-else
-	goto endif1
-endif1:
+	goto endif
+if bool1
+then
+	goto endif
+endif:
+b = 1
 
-for var i = 0 to i >= a
+for var i = 0 to a
 do
-	i = i + 1
+	i = i+1
 end
 
 while b < a
@@ -24,11 +23,13 @@ do
 end
 
 val x = (a + b)^2 * 3.2e-1 + 3e+2 / 1.5
-val str:string = 'Hello world'
-val bool1 = bool != true
-val bool2 = -1 <= +1
-val bool2 = 1 > 1
+val str1:string='Hello world'
+val str2:string = 'Hello world'
+val bool2 =bool != true
+val bool3 = -1 <= +1
+val bool4= 1 > 1
 
 var 1x = 1
-var x1 = 1
 {
+5
+z
