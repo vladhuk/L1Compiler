@@ -18,8 +18,8 @@ public class LexicalAnalyzer {
         final StringBuilder lexems = new StringBuilder();
 
         for (int i = 0; i < rows.size(); i++) {
-            final List<String> elements = Stream.of(rows.get(i).split("\\s|(?===|<=|>=|\\(|\\)|:|('.*')|\\^)"
-                                                                              + "|(?<===|<=|>=|\\(|\\)|:|('.*')|\\^)"))
+            final List<String> elements = Stream.of(rows.get(i).split("\\s|(?===|<=|>=|!=|\\(|\\)|:|('.*')|\\^)"
+                                                                              + "|(?<===|<=|>=|!=|\\(|\\)|:|('.*')|\\^)"))
                     .filter(str -> !str.isBlank())
                     .collect(Collectors.toList());
 
@@ -46,7 +46,7 @@ public class LexicalAnalyzer {
                     token = MULT_OP;
                 } else if (element.matches("^")) {
                     token = POW_OP;
-                } else if (element.matches(">|>=|<|<=|==")) {
+                } else if (element.matches(">|>=|<|<=|==|!=")) {
                     token = REL_OP;
                 } else if (element.matches("[()]")) {
                     token = BRACKET_OP;
