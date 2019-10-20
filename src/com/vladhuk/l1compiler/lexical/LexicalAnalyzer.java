@@ -4,63 +4,79 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 import java.util.stream.Stream;
 
-import static com.vladhuk.l1compiler.lexical.Token.*;
+import static com.vladhuk.l1compiler.lexical.Token.LITERAL;
+import static com.vladhuk.l1compiler.lexical.Token.UNKNOWN;
 
 public class LexicalAnalyzer {
 
+    private static String getSplitRegexWithoutDelimiterRemoving(String regex) {
+        return String.format("(?=%s)|(?<=%s)", regex, regex);
+    }
+
+    private static String deleteQuotes(String string) {
+        return string.replaceAll("'", "");
+    }
+
     public static String parse(String text) {
         final List<String> rows = Arrays.asList(text.split("\n"));
-        final StringBuilder lexems = new StringBuilder();
+
+        List<Lexem> lexemsTable;
+
+        lexemsTable = identifyStringLiterals(rows);
+        lexemsTable = firstEntry(lexemsTable);
+        lexemsTable = secondEntry(lexemsTable);
+
+        final Set<Identifier> indetifiersTable = getIdentifiersTable(lexemsTable);
+        final Set<Constant> constantsTable = getConstantsTable(lexemsTable);
+
+        final StringBuilder finalTables = new StringBuilder();
+        //
+        finalTables.append("-----");
+        //
+        finalTables.append("-----");
+
+        return finalTables.toString();
+    }
+
+    private static List<Lexem> identifyStringLiterals(List<String> rows) {
+        final List<Lexem> lexemsTable = new ArrayList<>();
 
         for (int i = 0; i < rows.size(); i++) {
-            final List<String> elements = Stream.of(rows.get(i).split("\\s|(?===|<=|>=|!=|\\(|\\)|:|\\^)"
-                                                                              + "|(?<===|<=|>=|!=|\\(|\\)|:|\\^)"))
+            final int rowNumber = i;
+            Stream.of(rows.get(i).split(getSplitRegexWithoutDelimiterRemoving("'\\.\\*'")))
                     .filter(str -> !str.isBlank())
-                    .collect(Collectors.toList());
-
-            for (String element : elements) {
-                Token token = UNKNOWN;
-
-                if (element.matches("var|val") ) {
-                    token = DECLARATION;
-                } else if (element.matches("for|while|to|do|end")) {
-                    token = LOOP;
-                } else if (element.matches("true|false|'.*'|\\d+((\\.\\d+)|((\\.\\d+)?e[+-]\\d+))?")) {
-                    token = LITERAL;
-                } else if (element.matches("if|then")) {
-                    token = CONDITION;
-                } else if (element.matches("goto")) {
-                    token = JUMP;
-                } else if (element.matches("number|boolean|string")) {
-                    token = TYPE;
-                } else if (element.matches("=")) {
-                    token = ASSIGN;
-                } else if (element.matches("[+-]")) {
-                    token = ADD_OP;
-                } else if (element.matches("[*/]")) {
-                    token = MULT_OP;
-                } else if (element.matches("^")) {
-                    token = POW_OP;
-                } else if (element.matches(">|>=|<|<=|==|!=")) {
-                    token = REL_OP;
-                } else if (element.matches("[()]")) {
-                    token = BRACKET_OP;
-                } else if (element.matches("[.:]")) {
-                    token = PUNCT;
-                } else if (element.matches("[a-zA-Z]+\\w*")) {
-                    token = IDENTIFIER;
-                }
-
-                lexems.append(String.format("%-7d %-15s %-15s\n", i + 1, element, token.name()));
-            }
+                    .forEach(element -> {
+                        if (element.matches(LITERAL.getRegex())) {
+                            lexemsTable.add(new Lexem(rowNumber, element, LITERAL));
+                        } else {
+                            lexemsTable.add(new Lexem(rowNumber, element, UNKNOWN));
+                        }
+                    });
         }
 
-        return lexems.toString();
+        return lexemsTable;
+    }
+
+    private static List<Lexem> firstEntry(List<Lexem> lexemsTable) {
+        return null;
+    }
+
+    private static List<Lexem> secondEntry(List<Lexem> lexemsTable) {
+        return null;
+    }
+
+    private static Set<Identifier> getIdentifiersTable(List<Lexem> lexemTable) {
+        return null;
+    }
+
+    private static Set<Constant> getConstantsTable(List<Lexem> lexemTable) {
+        return null;
     }
 
     public static void parse(Path source, Path destination) throws IOException {
