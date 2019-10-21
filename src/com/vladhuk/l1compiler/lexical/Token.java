@@ -8,7 +8,7 @@ public enum Token {
     },
     LITERAL {
         public String getRegex() {
-            return "true|false|'.*'|\\d+((\\.\\d+)|((\\.\\d+)?e[+-]\\d+))?";
+            return "true|false|'[^']*'|\\d+(((\\.\\d+)?e[+-]\\d+)|(\\.\\d+))?";
         }
     },
     DECLARATION {
@@ -43,12 +43,12 @@ public enum Token {
     },
     ADD_OP {
         public String getRegex() {
-            return "[+-]";
+            return "\\+|-";
         }
     },
     MULT_OP {
         public String getRegex() {
-            return "[*/]";
+            return "\\*|/";
         }
     },
     POW_OP {
@@ -58,17 +58,17 @@ public enum Token {
     },
     REL_OP {
         public String getRegex() {
-            return ">|>=|<|<=|==|!=";
+            return ">=|<=|==|!=|>|<";
         }
     },
     BRACKET_OP {
         public String getRegex() {
-            return "[()]";
+            return "\\(|\\)";
         }
     },
     PUNCT {
         public String getRegex() {
-            return "[.:]";
+            return ":";
         }
     },
     UNKNOWN {
