@@ -43,13 +43,7 @@ public class LexicalAnalyzer {
 
             final List<Lexem> rowList = splitIncludingDelimiters(rows.get(i), delimiter).stream()
                     .filter(str -> !str.isBlank())
-                    .map(lexemName -> {
-                        final Token token = Token.getToken(lexemName);
-                        if (token == UNKNOWN) {
-                            throw new RuntimeException(String.format("Cannot resolve '%s' on the line %d.", lexemName, rowNumber + 1));
-                        }
-                        return new Lexem(rowNumber + 1, lexemName, token);
-                    })
+                    .map(lexemName -> new Lexem(rowNumber + 1, lexemName, Token.getToken(lexemName)))
                     .collect(Collectors.toList());
 
             lexemsTable.addAll(rowList);

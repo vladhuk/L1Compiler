@@ -6,7 +6,6 @@ public class Identifier {
 
     private String name;
     private int index;
-    private Type type;
 
     public Identifier() {}
 
@@ -14,15 +13,14 @@ public class Identifier {
         this.name = name;
     }
 
-    public Identifier(String name, int index, Type type) {
+    public Identifier(String name, int index) {
         this.name = name;
         this.index = index;
-        this.type = type;
     }
 
     @Override
     public String toString() {
-        return String.format("%-15s %-7d %s", name, index, "");
+        return String.format("%-15s %-7d", name, index);
     }
 
     @Override
@@ -31,13 +29,12 @@ public class Identifier {
         if (o == null || getClass() != o.getClass()) return false;
         Identifier that = (Identifier) o;
         return index == that.index &&
-                Objects.equals(name, that.name) &&
-                type == that.type;
+                Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, index, type);
+        return Objects.hash(name, index);
     }
 
     public String getName() {
@@ -51,11 +48,5 @@ public class Identifier {
     }
     public void setIndex(int index) {
         this.index = index;
-    }
-    public Type getType() {
-        return type;
-    }
-    public void setType(Type type) {
-        this.type = type;
     }
 }
