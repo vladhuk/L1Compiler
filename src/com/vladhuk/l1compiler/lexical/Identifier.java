@@ -8,6 +8,12 @@ public class Identifier {
     private int index;
     private Type type;
 
+    public Identifier() {}
+
+    public Identifier(String name) {
+        this.name = name;
+    }
+
     public Identifier(String name, int index, Type type) {
         this.name = name;
         this.index = index;
@@ -16,7 +22,7 @@ public class Identifier {
 
     @Override
     public String toString() {
-        return String.format("%-15s %-7d %s", name, index, type.name());
+        return String.format("%-15s %-7d %s", name, index, "");
     }
 
     @Override

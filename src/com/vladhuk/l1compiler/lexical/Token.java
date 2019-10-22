@@ -1,12 +1,7 @@
 package com.vladhuk.l1compiler.lexical;
 
 public enum Token {
-    IDENTIFIER {
-        public String getRegex() {
-            return "[a-zA-Z]+\\w*";
-        }
-    },
-    LITERAL {
+    CONSTANT {
         public String getRegex() {
             return "true|false|'[^']*'|\\d+(((\\.\\d+)?e[+-]\\d+)|(\\.\\d+))?";
         }
@@ -53,7 +48,7 @@ public enum Token {
     },
     POW_OP {
         public String getRegex() {
-            return "^";
+            return "\\^";
         }
     },
     REL_OP {
@@ -71,6 +66,11 @@ public enum Token {
             return ":";
         }
     },
+    IDENTIFIER {
+        public String getRegex() {
+            return "[a-zA-Z]+\\w*";
+        }
+    },
     UNKNOWN {
         public String getRegex() {
             return "";
@@ -78,4 +78,13 @@ public enum Token {
     };
 
     public abstract String getRegex();
+
+    public static Token getToken(String lexem) {
+        for (Token token : Token.values()) {
+            if (lexem.matches(token.getRegex())) {
+                return token;
+            }
+        }
+        return UNKNOWN;
+    }
 }

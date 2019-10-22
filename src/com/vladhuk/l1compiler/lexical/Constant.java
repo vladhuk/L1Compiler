@@ -4,17 +4,23 @@ import java.util.Objects;
 
 public class Constant {
 
-    private String constant;
+    private String name;
     private int index;
 
-    public Constant(String constant, int index) {
-        this.constant = constant;
+    public Constant() {}
+
+    public Constant(String name) {
+        this.name = name;
+    }
+
+    public Constant(String name, int index) {
+        this.name = name;
         this.index = index;
     }
 
     @Override
     public String toString() {
-        return String.format("%-15s %d", constant, index);
+        return String.format("%-15s %d", name, index);
     }
 
     @Override
@@ -23,18 +29,18 @@ public class Constant {
         if (o == null || getClass() != o.getClass()) return false;
         Constant constant1 = (Constant) o;
         return index == constant1.index &&
-                Objects.equals(constant, constant1.constant);
+                Objects.equals(name, constant1.name);
     }
     @Override
     public int hashCode() {
-        return Objects.hash(constant, index);
+        return Objects.hash(name, index);
     }
 
-    public String getConstant() {
-        return constant;
+    public String getName() {
+        return name;
     }
-    public void setConstant(String constant) {
-        this.constant = constant;
+    public void setName(String name) {
+        this.name = name;
     }
     public int getIndex() {
         return index;

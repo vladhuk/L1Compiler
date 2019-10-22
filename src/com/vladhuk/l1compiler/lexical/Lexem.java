@@ -3,24 +3,26 @@ package com.vladhuk.l1compiler.lexical;
 public class Lexem {
 
     private int rowNumber;
-    private String lexem;
+    private String name;
     private Token token;
-    private int index;
+    private int index = -1;
 
-    public Lexem(int rowNumber, String lexem, Token token) {
+    public Lexem() {}
+
+    public Lexem(int rowNumber, String name, Token token) {
         this.rowNumber = rowNumber;
-        this.lexem = lexem;
+        this.name = name;
         this.token = token;
     }
 
-    public Lexem(int rowNumber, String lexem, Token token, int index) {
-        this(rowNumber, lexem, token);
+    public Lexem(int rowNumber, String name, Token token, int index) {
+        this(rowNumber, name, token);
         this.index = index;
     }
 
     @Override
     public String toString() {
-        return String.format("%-7d %-15s %-15s %d", rowNumber, lexem, token.name(), index);
+        return String.format("%-7d %-15s %-15s %s", rowNumber, name, token.name(), index == -1 ? "" : index);
     }
 
     public int getRowNumber() {
@@ -29,11 +31,11 @@ public class Lexem {
     public void setRowNumber(int rowNumber) {
         this.rowNumber = rowNumber;
     }
-    public String getLexem() {
-        return lexem;
+    public String getName() {
+        return name;
     }
-    public void setLexem(String lexem) {
-        this.lexem = lexem;
+    public void setName(String name) {
+        this.name = name;
     }
     public Token getToken() {
         return token;

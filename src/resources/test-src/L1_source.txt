@@ -29,8 +29,3 @@ val str3 = '3e-4'
 val bool2 =bool!= true
 val bool3 = -1 <=+1
 val bool4= 1 > 1
-
-var 1x = 1
-{
-5
-z
