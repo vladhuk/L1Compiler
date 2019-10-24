@@ -22,16 +22,16 @@ do
 	b = b + 1
 end
 
-val x = (a + b)^2* 3.2e-1 +3e+2/ 1.5
-val str1:string='Hello world'
+val x = (a+b)^2* 3.2e-1 +3e+2/ 1.5+1.4/1
+val str1::string='Hello world'
 val str2:string = ''
 val str3 = '3e-4'
-val bool2 =bool!= true
-val bool3 = -1 <=+1
-val bool4= 1 > 1
-
+val bool2 =bool! true
+val bool3 = -1 <=>+1
+val bool4= 1 >= 1
+#
 var 1x = 1
 {
-5
+5.1.1
 z
 3.2e-1.1

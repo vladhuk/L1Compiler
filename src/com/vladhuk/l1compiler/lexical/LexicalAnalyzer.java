@@ -28,7 +28,10 @@ public class LexicalAnalyzer {
     }
 
     private static List<Lexem> createLexemsTable(List<String> rows) {
-        final Pattern delimiter = Pattern.compile("'[^']*'|\\d+(((\\.\\d+)?e[+-]\\d+))|\\s"
+        final Pattern delimiter = Pattern.compile(
+                "'[^']*'"                                    // String
+                + "|\\d+(((\\.\\d+)?e[+-]\\d+)|(\\.\\d+))"   // Number
+                + "|\\s"                                     // Space
                 + "|" + REL_OP.getRegex()
                 + "|" + ADD_OP.getRegex()
                 + "|" + MULT_OP.getRegex()
@@ -43,7 +46,16 @@ public class LexicalAnalyzer {
 
             final List<Lexem> rowList = splitIncludingDelimiters(rows.get(i), delimiter).stream()
                     .filter(str -> !str.isBlank())
-                    .map(lexemName -> new Lexem(rowNumber + 1, lexemName, Token.getToken(lexemName)))
+                    .map(lexemName -> {
+                        final Token token = Token.getToken(lexemName);
+                        if (token == UNKNOWN) {
+                            System.err.format("Unidentified lexem \"%s\" on the row %d.\n", lexemName, rowNumber + 1);
+                            return null;
+                        } else {
+                            return new Lexem(rowNumber + 1, lexemName, token);
+                        }
+                    })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
             lexemsTable.addAll(rowList);
