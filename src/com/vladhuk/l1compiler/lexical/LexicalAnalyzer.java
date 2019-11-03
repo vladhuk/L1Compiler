@@ -18,7 +18,7 @@ public class LexicalAnalyzer {
 
         final List<Lexem> lexemsTable = createLexemsTable(rows);
         final List<Constant> constantsTable = addConstantsIndexesAndGetTable(lexemsTable);
-        final List<Identifier> identifiersTable = addIdentifiersIndexesAndGetTable(lexemsTable, constantsTable);
+        final List<Identifier> identifiersTable = addIdentifiersIndexesAndGetTable(lexemsTable);
 
         return tableToString(lexemsTable) +
                 "\n-----\n" +
@@ -84,10 +84,6 @@ public class LexicalAnalyzer {
         return resultList;
     }
 
-    private static List<String> splitIncludingDelimiters(String text, String regex) {
-        return splitIncludingDelimiters(text, Pattern.compile(regex));
-    }
-
     private static List<Constant> addConstantsIndexesAndGetTable(List<Lexem> lexemsTable) {
         final Set<Constant> constantsTableSet = new LinkedHashSet<>();
         for (Lexem lexem : lexemsTable) {
@@ -114,7 +110,7 @@ public class LexicalAnalyzer {
         return constantsTable;
     }
 
-    private static List<Identifier> addIdentifiersIndexesAndGetTable(List<Lexem> lexemsTable, List<Constant> constantTable) {
+    private static List<Identifier> addIdentifiersIndexesAndGetTable(List<Lexem> lexemsTable) {
         final Set<Identifier> identifiersTableSet = new LinkedHashSet<>();
         for (Lexem lexem : lexemsTable) {
             if (lexem.getToken() == IDENTIFIER) {
