@@ -17,8 +17,8 @@ public class LexicalAnalyzer {
         final List<String> rows = Arrays.asList(text.split("\n"));
 
         final List<Lexem> lexemsTable = createLexemsTable(rows);
-        final List<Constant> constantsTable = addConstantsIndexesAndGetTable(lexemsTable);
-        final List<Identifier> identifiersTable = addIdentifiersIndexesAndGetTable(lexemsTable);
+        final Set<Pair> constantsTable = addLexemIndexesAndGetPairTable(lexemsTable, CONSTANT);
+        final Set<Pair> identifiersTable = addLexemIndexesAndGetPairTable(lexemsTable, IDENTIFIER);
 
         return tableToString(lexemsTable) +
                 "\n-----\n" +
@@ -84,56 +84,30 @@ public class LexicalAnalyzer {
         return resultList;
     }
 
-    private static List<Constant> addConstantsIndexesAndGetTable(List<Lexem> lexemsTable) {
-        final Set<Constant> constantsTableSet = new LinkedHashSet<>();
+    private static Set<Pair> addLexemIndexesAndGetPairTable(List<Lexem> lexemsTable, Token pairType) {
+        final Set<Pair> pairTable = new LinkedHashSet<>();
         for (Lexem lexem : lexemsTable) {
-            if (lexem.getToken() == CONSTANT) {
-                constantsTableSet.add(new Constant(lexem.getName()));
+            if (lexem.getToken() == pairType) {
+                pairTable.add(new Pair(lexem.getName()));
             }
         }
 
-        final List<Constant> constantsTable = new ArrayList<>(constantsTableSet);
-        for (int i = 0; i < constantsTable.size(); i++) {
-            constantsTable.get(i).setIndex(i);
+        int pairIndex = 0;
+        for (Pair pair : pairTable) {
+            pair.setIndex(pairIndex++);
         }
 
-        lexemsTable.stream().forEach(lexem -> {
-            if (lexem.getToken() == CONSTANT) {
-                for (Constant constant : constantsTable) {
-                    if (Objects.equals(constant.getName(), lexem.getName())) {
-                        lexem.setIndex(constant.getIndex());
+        lexemsTable.forEach(lexem -> {
+            if (lexem.getToken() == pairType) {
+                for (Pair element : pairTable) {
+                    if (Objects.equals(element.getName(), lexem.getName())) {
+                        lexem.setIndex(element.getIndex());
                     }
                 }
             }
         });
 
-        return constantsTable;
-    }
-
-    private static List<Identifier> addIdentifiersIndexesAndGetTable(List<Lexem> lexemsTable) {
-        final Set<Identifier> identifiersTableSet = new LinkedHashSet<>();
-        for (Lexem lexem : lexemsTable) {
-            if (lexem.getToken() == IDENTIFIER) {
-                identifiersTableSet.add(new Identifier(lexem.getName()));
-            }
-        }
-
-        final List<Identifier> identifiersTable = new ArrayList<>(identifiersTableSet);
-        for (int i = 0; i < identifiersTable.size(); i++) {
-            identifiersTable.get(i).setIndex(i);
-        }
-
-        lexemsTable.stream().forEach(lexem -> {
-            if (lexem.getToken() == IDENTIFIER) {
-                for (Identifier identifier : identifiersTable) {
-                    if (Objects.equals(identifier.getName(), lexem.getName())) {
-                        lexem.setIndex(identifier.getIndex());
-                    }
-                }
-            }
-        });
-
-        return identifiersTable;
+        return pairTable;
     }
 
     private static String tableToString(Collection<?> table) {
