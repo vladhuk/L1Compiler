@@ -5,11 +5,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.vladhuk.l1compiler.lexical.Token.*;
+import static com.vladhuk.l1compiler.util.Util.splitIncludingDelimiters;
 
 public class LexicalAnalyzer {
 
@@ -20,7 +20,8 @@ public class LexicalAnalyzer {
         final Set<Pair> constantsTable = addLexemIndexesAndGetPairTable(lexemsTable, CONSTANT);
         final Set<Pair> identifiersTable = addLexemIndexesAndGetPairTable(lexemsTable, IDENTIFIER);
 
-        return tableToString(lexemsTable) +
+        return "-----\n" +
+                tableToString(lexemsTable) +
                 "\n-----\n" +
                 tableToString(constantsTable) +
                 "\n-----\n" +
@@ -62,26 +63,6 @@ public class LexicalAnalyzer {
         }
 
         return lexemsTable;
-    }
-
-    private static List<String> splitIncludingDelimiters(String text, Pattern regex) {
-        final List<String> resultList = new ArrayList<>();
-        final Matcher matcher = regex.matcher(text);
-        int start = 0;
-
-        while (matcher.find()) {
-            if (matcher.start() != 0) {
-                resultList.add(text.substring(start, matcher.start()));
-            }
-            resultList.add(matcher.group());
-            start = matcher.end();
-        }
-
-        if (start < text.length()) {
-            resultList.add(text.substring(start));
-        }
-
-        return resultList;
     }
 
     private static Set<Pair> addLexemIndexesAndGetPairTable(List<Lexem> lexemsTable, Token pairType) {
