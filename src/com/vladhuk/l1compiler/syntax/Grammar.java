@@ -103,9 +103,9 @@ public class Grammar {
                 : lexems.size() == 2;
 
         final boolean valDeclaration = lexems.get(0).getName().equals("val") && identifier
-                && typeDefinition && assigning;
+                && assigning;
         final boolean varDeclaration = lexems.get(0).getName().equals("var") && identifier
-                && (assigning || emptyAssign);
+                && (assigning || (typeDefinition && emptyAssign));
 
         return valDeclaration || varDeclaration;
     }
