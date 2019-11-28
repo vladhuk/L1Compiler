@@ -1,6 +1,7 @@
 package com.vladhuk.l1compiler;
 
 import com.vladhuk.l1compiler.lexical.LexicalAnalyzer;
+import com.vladhuk.l1compiler.syntax.SyntaxAnalyzer;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,5 +17,6 @@ public class Main {
         }
 
         LexicalAnalyzer.parse(source, lexems);
+        SyntaxAnalyzer.analyze(lexems);
     }
 }

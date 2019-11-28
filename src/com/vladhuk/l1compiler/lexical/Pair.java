@@ -2,35 +2,36 @@ package com.vladhuk.l1compiler.lexical;
 
 import java.util.Objects;
 
-public class Constant {
+public class Pair {
 
     private String name;
     private int index;
 
-    public Constant() {}
+    public Pair() {}
 
-    public Constant(String name) {
+    public Pair(String name) {
         this.name = name;
     }
 
-    public Constant(String name, int index) {
+    public Pair(String name, int index) {
         this.name = name;
         this.index = index;
     }
 
     @Override
     public String toString() {
-        return String.format("%-15s %d", name, index);
+        return String.format("%-15s %-7d", name, index);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Constant constant1 = (Constant) o;
-        return index == constant1.index &&
-                Objects.equals(name, constant1.name);
+        Pair that = (Pair) o;
+        return index == that.index &&
+                Objects.equals(name, that.name);
     }
+
     @Override
     public int hashCode() {
         return Objects.hash(name, index);

@@ -5,11 +5,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.vladhuk.l1compiler.lexical.Token.*;
+import static com.vladhuk.l1compiler.util.Util.splitIncludingDelimiters;
 
 public class LexicalAnalyzer {
 
@@ -17,10 +17,11 @@ public class LexicalAnalyzer {
         final List<String> rows = Arrays.asList(text.split("\n"));
 
         final List<Lexem> lexemsTable = createLexemsTable(rows);
-        final List<Constant> constantsTable = addConstantsIndexesAndGetTable(lexemsTable);
-        final List<Identifier> identifiersTable = addIdentifiersIndexesAndGetTable(lexemsTable, constantsTable);
+        final Set<Pair> constantsTable = addLexemIndexesAndGetPairTable(lexemsTable, CONSTANT);
+        final Set<Pair> identifiersTable = addLexemIndexesAndGetPairTable(lexemsTable, IDENTIFIER);
 
-        return tableToString(lexemsTable) +
+        return "-----\n" +
+                tableToString(lexemsTable) +
                 "\n-----\n" +
                 tableToString(constantsTable) +
                 "\n-----\n" +
@@ -64,80 +65,30 @@ public class LexicalAnalyzer {
         return lexemsTable;
     }
 
-    private static List<String> splitIncludingDelimiters(String text, Pattern regex) {
-        final List<String> resultList = new ArrayList<>();
-        final Matcher matcher = regex.matcher(text);
-        int start = 0;
-
-        while (matcher.find()) {
-            if (matcher.start() != 0) {
-                resultList.add(text.substring(start, matcher.start()));
-            }
-            resultList.add(matcher.group());
-            start = matcher.end();
-        }
-
-        if (start < text.length()) {
-            resultList.add(text.substring(start));
-        }
-
-        return resultList;
-    }
-
-    private static List<String> splitIncludingDelimiters(String text, String regex) {
-        return splitIncludingDelimiters(text, Pattern.compile(regex));
-    }
-
-    private static List<Constant> addConstantsIndexesAndGetTable(List<Lexem> lexemsTable) {
-        final Set<Constant> constantsTableSet = new LinkedHashSet<>();
+    private static Set<Pair> addLexemIndexesAndGetPairTable(List<Lexem> lexemsTable, Token pairType) {
+        final Set<Pair> pairTable = new LinkedHashSet<>();
         for (Lexem lexem : lexemsTable) {
-            if (lexem.getToken() == CONSTANT) {
-                constantsTableSet.add(new Constant(lexem.getName()));
+            if (lexem.getToken() == pairType) {
+                pairTable.add(new Pair(lexem.getName()));
             }
         }
 
-        final List<Constant> constantsTable = new ArrayList<>(constantsTableSet);
-        for (int i = 0; i < constantsTable.size(); i++) {
-            constantsTable.get(i).setIndex(i);
+        int pairIndex = 0;
+        for (Pair pair : pairTable) {
+            pair.setIndex(pairIndex++);
         }
 
-        lexemsTable.stream().forEach(lexem -> {
-            if (lexem.getToken() == CONSTANT) {
-                for (Constant constant : constantsTable) {
-                    if (Objects.equals(constant.getName(), lexem.getName())) {
-                        lexem.setIndex(constant.getIndex());
+        lexemsTable.forEach(lexem -> {
+            if (lexem.getToken() == pairType) {
+                for (Pair element : pairTable) {
+                    if (Objects.equals(element.getName(), lexem.getName())) {
+                        lexem.setIndex(element.getIndex());
                     }
                 }
             }
         });
 
-        return constantsTable;
-    }
-
-    private static List<Identifier> addIdentifiersIndexesAndGetTable(List<Lexem> lexemsTable, List<Constant> constantTable) {
-        final Set<Identifier> identifiersTableSet = new LinkedHashSet<>();
-        for (Lexem lexem : lexemsTable) {
-            if (lexem.getToken() == IDENTIFIER) {
-                identifiersTableSet.add(new Identifier(lexem.getName()));
-            }
-        }
-
-        final List<Identifier> identifiersTable = new ArrayList<>(identifiersTableSet);
-        for (int i = 0; i < identifiersTable.size(); i++) {
-            identifiersTable.get(i).setIndex(i);
-        }
-
-        lexemsTable.stream().forEach(lexem -> {
-            if (lexem.getToken() == IDENTIFIER) {
-                for (Identifier identifier : identifiersTable) {
-                    if (Objects.equals(identifier.getName(), lexem.getName())) {
-                        lexem.setIndex(identifier.getIndex());
-                    }
-                }
-            }
-        });
-
-        return identifiersTable;
+        return pairTable;
     }
 
     private static String tableToString(Collection<?> table) {
