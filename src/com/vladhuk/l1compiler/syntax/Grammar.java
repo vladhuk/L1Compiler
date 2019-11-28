@@ -4,6 +4,7 @@ import com.vladhuk.l1compiler.lexical.Lexem;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -11,26 +12,11 @@ import static com.vladhuk.l1compiler.lexical.Token.*;
 
 public class Grammar {
 
-    private static int findIndexAfterFromStart(List<Lexem> lexems, Predicate<List<Lexem>> predicate) {
-        final List<Lexem> start = new ArrayList<>();
-        int indexOfOp = -1;
-        for (int i = 0; i < lexems.size() - 1; i++) {
-            start.add(lexems.get(i));
-
-            if (predicate.test(start)) {
-                indexOfOp = i + 1;
-                break;
-            }
-        }
-
-        return indexOfOp;
-    }
-
     private static int findIndexBeforeFromEnd(List<Lexem> lexems, Predicate<List<Lexem>> predicate) {
-        final List<Lexem> end = new ArrayList<>();
+        final LinkedList<Lexem> end = new LinkedList<>();
         int indexOfOp = -1;
         for (int i = lexems.size() - 1; i >= 1; i--) {
-            end.add(lexems.get(i));
+            end.addFirst(lexems.get(i));
 
             if (predicate.test(end)) {
                 indexOfOp = i - 1;
@@ -47,6 +33,7 @@ public class Grammar {
         }
         return StatementList(lexems);
     }
+
     public static boolean StatementList(List<Lexem> lexems) {
         final List<List<Lexem>> splitBySameRowLexems = new ArrayList<>();
 
@@ -64,7 +51,7 @@ public class Grammar {
         }
 
         final List<Lexem> multiplyRowStatement = new ArrayList<>();
-        for (int i = 0; i < splitBySameRowLexems.size(); i++){
+        for (int i = 0; i < splitBySameRowLexems.size(); i++) {
 
             if (!Statement(splitBySameRowLexems.get(i))) {
 
@@ -81,11 +68,17 @@ public class Grammar {
 
         return multiplyRowStatement.isEmpty();
     }
+
     public static boolean Statement(List<Lexem> lexems) {
         return Declaration(lexems) || ConstantDefinition(lexems) || Assign(lexems)
                 || Loop(lexems) || Condition(lexems) || Goto(lexems) || LabelMark(lexems);
     }
+
     public static boolean Declaration(List<Lexem> lexems) {
+        if (lexems.size() < 4) {
+            return false;
+        }
+
         if (lexems.get(0).getToken() != DECLARATION) {
             return false;
         }
@@ -116,18 +109,17 @@ public class Grammar {
 
         return valDeclaration || varDeclaration;
     }
+
     public static boolean Identifier(List<Lexem> lexems) {
         return lexems.size() == 1 && lexems.get(0).getToken() == IDENTIFIER;
     }
-    public static boolean Type(List<Lexem> lexems) {
-        // TODO: Check for usage and delete
-        throw new UnsupportedOperationException();
-    }
+
     public static boolean Expression(List<Lexem> lexems) {
         return ArithmExpression(lexems) || BoolExpression(lexems) || String(lexems);
     }
+
     public static boolean BoolExpression(List<Lexem> lexems) {
-        if (Boolean(lexems)) {
+        if (Boolean(lexems) || Identifier(lexems)) {
             return true;
         }
 
@@ -137,7 +129,7 @@ public class Grammar {
 
         final List<Lexem> arithmExpression1 = new ArrayList<>();
         int indexOfRelOp = -1;
-        for (int i = 0; i < lexems.size() - 2; i++){
+        for (int i = 0; i < lexems.size() - 2; i++) {
             arithmExpression1.add(lexems.get(i));
 
             if (ArithmExpression(arithmExpression1)) {
@@ -156,6 +148,7 @@ public class Grammar {
 
         return relOp && arithmExpression2;
     }
+
     public static boolean ArithmExpression(List<Lexem> lexems) {
         final boolean sign = lexems.size() > 1 && lexems.get(0).getToken() == ADD_OP;
 
@@ -170,7 +163,7 @@ public class Grammar {
         if (lexems.size() < 3) {
             return false;
         }
-        
+
         final int indexOfAddOp = findIndexBeforeFromEnd(lexems, Grammar::Term);
 
         if (indexOfAddOp == -1) {
@@ -183,6 +176,7 @@ public class Grammar {
 
         return arithmExpression && addOp;
     }
+
     public static boolean Term(List<Lexem> lexems) {
         if (Factor(lexems)) {
             return true;
@@ -204,6 +198,7 @@ public class Grammar {
 
         return term && multOp;
     }
+
     public static boolean Factor(List<Lexem> lexems) {
         if (Identifier(lexems) || SignedNumber(lexems)) {
             return true;
@@ -219,9 +214,11 @@ public class Grammar {
 
         return brackets && arithmExpression;
     }
+
     public static boolean SignedNumber(List<Lexem> lexems) {
         return SignedInteger(lexems) || SignedReal(lexems);
     }
+
     public static boolean SignedReal(List<Lexem> lexems) {
         final boolean sign = lexems.size() > 1 && lexems.get(0).getToken() == ADD_OP;
 
@@ -229,6 +226,7 @@ public class Grammar {
                 ? UnsignedReal(lexems.subList(1, lexems.size()))
                 : UnsignedReal(lexems.subList(0, lexems.size()));
     }
+
     public static boolean SignedInteger(List<Lexem> lexems) {
         final boolean sign = lexems.size() > 1 && lexems.get(0).getToken() == ADD_OP;
 
@@ -236,90 +234,122 @@ public class Grammar {
                 ? UnsignedInteger(lexems.subList(1, lexems.size()))
                 : UnsignedInteger(lexems.subList(0, lexems.size()));
     }
-    public static boolean UnsignedNumber(List<Lexem> lexems) {
-        return UnsignedInteger(lexems) || UnsignedReal(lexems);
-    }
-    public static boolean Sign(List<Lexem> lexems) {
-        // TODO: Check for usage
-        throw new UnsupportedOperationException();
-    }
+
     public static boolean UnsignedReal(List<Lexem> lexems) {
         return lexems.size() == 1
                 && lexems.get(0).getToken() == CONSTANT
                 && lexems.get(0).getName().matches("\\d+(((\\.\\d+)?e[+-]\\d+)|(\\.\\d+))");
     }
+
     public static boolean UnsignedInteger(List<Lexem> lexems) {
         return lexems.size() == 1
                 && lexems.get(0).getToken() == CONSTANT
                 && lexems.get(0).getName().matches("\\d+");
     }
+
     public static boolean Boolean(List<Lexem> lexems) {
         return lexems.size() == 1
                 && lexems.get(0).getToken() == CONSTANT
                 && lexems.get(0).getName().matches("true|false");
     }
+
     public static boolean String(List<Lexem> lexems) {
         return lexems.size() == 1
                 && lexems.get(0).getToken() == CONSTANT
                 && lexems.get(0).getName().matches("'[^']*'");
     }
+
     public static boolean Assign(List<Lexem> lexems) {
         return lexems.size() >= 3
                 && lexems.get(0).getToken() == IDENTIFIER
                 && lexems.get(1).getToken() == ASSIGN
                 && Expression(lexems.subList(2, lexems.size()));
     }
+
     public static boolean ConstantDefinition(List<Lexem> lexems) {
         return lexems.size() == 3
                 && lexems.get(0).getToken() == IDENTIFIER
                 && lexems.get(1).getToken() == ASSIGN
                 && lexems.get(2).getToken() == CONSTANT;
     }
-    public static boolean Constant(List<Lexem> lexems) {
-        if (String(lexems)) {
-            return true;
-        }
 
-        final boolean sign = lexems.size() > 1 && lexems.get(0).getToken() == ADD_OP;
-
-        return sign
-                ? UnsignedNumber(lexems.subList(1, lexems.size()))
-                : UnsignedNumber(lexems.subList(0, lexems.size()));
-    }
     public static boolean Loop(List<Lexem> lexems) {
-        int indexOfStatementsStart = findIndexAfterFromStart(lexems, Grammar::ForLoop);
-        if (indexOfStatementsStart == -1) {
-            indexOfStatementsStart = findIndexAfterFromStart(lexems, Grammar::WhileLoop);
+        final int lastIndexOfLoopStatement = findIndexBeforeFromEnd(lexems, Grammar::LoopStatements);
+
+        if (lastIndexOfLoopStatement == -1) {
+            return false;
         }
 
-        return indexOfStatementsStart != -1 && LoopStatements(lexems.subList(indexOfStatementsStart, lexems.size()));
+        final List<Lexem> loopStatement = lexems.subList(0, lastIndexOfLoopStatement + 1);
+
+        return WhileLoop(loopStatement) || ForLoop(loopStatement);
     }
+
     public static boolean ForLoop(List<Lexem> lexems) {
-        return true;
+        if (lexems.size() < 4) {
+            return false;
+        }
+
+        if (!lexems.get(0).getName().equals("for")) {
+            return false;
+        }
+
+        final int indexOfTo = findIndexBeforeFromEnd(lexems, Grammar::ArithmExpression);
+
+        if (indexOfTo == -1) {
+            return false;
+        }
+
+        final boolean to = lexems.get(indexOfTo).getName().equals("to");
+
+        final List<Lexem> assigningLexems = lexems.subList(1, indexOfTo);
+
+        final boolean assigning = Declaration(assigningLexems) || Assign(assigningLexems);
+
+        return to && assigning;
     }
+
     public static boolean WhileLoop(List<Lexem> lexems) {
-        return true;
+        return lexems.size() >= 2
+                && lexems.get(0).getName().equals("while")
+                && BoolExpression(lexems.subList(1, lexems.size()));
     }
+
     public static boolean LoopStatements(List<Lexem> lexems) {
-        return true;
+        final boolean wrapWords = lexems.get(0).getName().equals("do")
+                && lexems.get(lexems.size() - 1).getName().equals("end");
+
+        return wrapWords && StatementList(lexems.subList(1, lexems.size() - 1));
     }
+
     public static boolean Condition(List<Lexem> lexems) {
-        return true;
+        if (lexems.size() < 4) {
+            return false;
+        }
+
+        final boolean goTo = Goto(lexems.subList(lexems.size() - 2, lexems.size()));
+
+        final boolean wrapKeywords = lexems.get(0).getName().equals("if")
+                && lexems.get(lexems.size() - 3).getName().equals("then");
+
+        final boolean boolExpression = BoolExpression(lexems.subList(1, lexems.size() - 3));
+
+        return goTo && wrapKeywords && boolExpression;
     }
+
     public static boolean Goto(List<Lexem> lexems) {
-        return true;
+        return lexems.get(0).getToken() == JUMP
+                && Mark(lexems.subList(1, lexems.size()));
     }
+
     public static boolean Mark(List<Lexem> lexems) {
-        return true;
+        return Identifier(lexems);
     }
+
     public static boolean LabelMark(List<Lexem> lexems) {
-        return true;
-    }
-    public static boolean Letter(List<Lexem> lexems) {
-        return true;
-    }
-    public static boolean Digit(List<Lexem> lexems) {
-        return true;
+        return lexems.size() == 2
+                && Mark(lexems.subList(0, lexems.size() - 1))
+                && lexems.get(lexems.size() - 1).getName().equals(":");
     }
 
 }
