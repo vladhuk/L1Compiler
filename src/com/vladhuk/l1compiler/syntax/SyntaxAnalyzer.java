@@ -17,7 +17,7 @@ public class SyntaxAnalyzer {
     public static void analyze(List<String> tables) {
         final List<Lexem> lexems = getLexemsFromTable(getLexemTableFromTables(tables));
 
-        if (Grammatic.Program(lexems)) {
+        if (Grammar.Program(lexems)) {
             System.out.println("Syntax is correct");
         } else {
             System.err.println("Syntax is wrong!");
