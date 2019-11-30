@@ -192,7 +192,8 @@ public class Grammar {
             return false;
         }
 
-        final boolean multOp = lexems.get(indexOfMultOp).getToken() == MULT_OP;
+        final boolean multOp = lexems.get(indexOfMultOp).getToken() == MULT_OP
+                || lexems.get(indexOfMultOp).getToken() == POW_OP;
 
         final boolean term = Term(lexems.subList(0, indexOfMultOp));
 
