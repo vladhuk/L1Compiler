@@ -24,21 +24,6 @@ public class Grammar {
         errorStack.add("Wrong " + terminalName + description + " on line " + lexems.get(0).getRowNumber() + ": " + lexemNames);
     }
 
-    private static int findIndexAfterFromStart(List<Lexem> lexems, Predicate<List<Lexem>> predicate) {
-        final List<Lexem> start = new ArrayList<>();
-        int indexOfOp = -1;
-        for (int i = 0; i < lexems.size() - 1; i++) {
-            start.add(lexems.get(i));
-
-            if (predicate.test(start)) {
-                indexOfOp = i + 1;
-                break;
-            }
-        }
-
-        return indexOfOp;
-    }
-
     private static int findIndexBeforeFromEnd(List<Lexem> lexems, Predicate<List<Lexem>> predicate) {
         final LinkedList<Lexem> end = new LinkedList<>();
         int indexOfOp = -1;
@@ -76,7 +61,7 @@ public class Grammar {
         if (StatementList(lexems)) {
             return true;
         } else {
-            System.err.println(String.join("\n", errorStack));
+            System.err.println(errorStack.get(0));
             return false;
         }
     }
@@ -99,11 +84,11 @@ public class Grammar {
 
         final List<Lexem> multiplyRowStatement = new ArrayList<>();
         for (int i = 0; i < splitBySameRowLexems.size(); i++) {
+            errorStack.clear();
 
             if (!Statement(splitBySameRowLexems.get(i))) {
 
                 for (; i < splitBySameRowLexems.size(); i++) {
-                    errorStack.clear();
                     multiplyRowStatement.addAll(splitBySameRowLexems.get(i));
 
                     if (Statement(multiplyRowStatement)) {
@@ -123,11 +108,12 @@ public class Grammar {
     }
 
     public static boolean Declaration(List<Lexem> lexems) {
-        if (lexems.size() < 4) {
+        if (lexems.get(0).getToken() != DECLARATION) {
             return false;
         }
 
-        if (lexems.get(0).getToken() != DECLARATION) {
+        if (lexems.size() < 4) {
+            showError("declaration", "", lexems);
             return false;
         }
 
@@ -142,16 +128,11 @@ public class Grammar {
                 && lexems.get(3).getToken() == TYPE;
 
         final boolean assign = typeDefinition
-                ? lexems.get(4).getToken() == ASSIGN
+                ? lexems.size() >= 5 && lexems.get(4).getToken() == ASSIGN
                 : lexems.get(2).getToken() == ASSIGN;
 
-        if (!assign && lexems.get(2).getToken() != ASSIGN) {
-            showError("declaration", "expected =", lexems);
-            return false;
-        }
-
         final List<Lexem> afterAssign = typeDefinition
-                ? lexems.subList(5, lexems.size())
+                ? lexems.size() >= 5 ? lexems.subList(5, lexems.size()) : null
                 : lexems.subList(3, lexems.size());
 
         final boolean assigning = assign && (Expression(afterAssign) || Identifier(afterAssign));
@@ -167,7 +148,7 @@ public class Grammar {
             if (assigning) {
                 return true;
             } else {
-                showError("declaration", "assigning in val declaration", lexems);
+                showError("declaration", "expected assigning in val declaration", lexems);
                 return false;
             }
         }
@@ -203,16 +184,7 @@ public class Grammar {
             return false;
         }
 
-        final List<Lexem> arithmExpression1 = new ArrayList<>();
-        int indexOfRelOp = -1;
-        for (int i = 0; i < lexems.size() - 2; i++) {
-            arithmExpression1.add(lexems.get(i));
-
-            if (ArithmExpression(arithmExpression1)) {
-                indexOfRelOp = i + 1;
-                break;
-            }
-        }
+        final int indexOfRelOp = findLastIndexBeforeFromEnd(lexems, Grammar::ArithmExpression);
 
         if (indexOfRelOp == -1) {
             return false;
@@ -222,7 +194,7 @@ public class Grammar {
             return false;
         }
 
-        return ArithmExpression(lexems.subList(indexOfRelOp + 1, lexems.size()));
+        return ArithmExpression(lexems.subList(0, indexOfRelOp));
     }
 
     public static boolean ArithmExpression(List<Lexem> lexems) {
@@ -249,7 +221,7 @@ public class Grammar {
         final boolean addOp = lexems.get(indexOfAddOp).getToken() == ADD_OP;
 
         if (!addOp) {
-            showError("arithmetical expression", "expected - or +", lexems);
+            showError("arithmetical expression", "", lexems);
             return false;
         }
 
@@ -360,7 +332,7 @@ public class Grammar {
             return false;
         }
 
-        final int lastIndexOfLoopStatement = findIndexBeforeFromEnd(lexems, Grammar::LoopStatements);
+        final int lastIndexOfLoopStatement = findLastIndexBeforeFromEnd(lexems, Grammar::LoopStatements);
 
         if (lastIndexOfLoopStatement == -1) {
             return false;
@@ -385,7 +357,7 @@ public class Grammar {
             return false;
         }
 
-        final int indexOfTo = findIndexBeforeFromEnd(lexems, Grammar::ArithmExpression);
+        final int indexOfTo = findLastIndexBeforeFromEnd(lexems, Grammar::ArithmExpression);
 
         if (indexOfTo == -1) {
             return false;
