@@ -6,15 +6,19 @@ val bool1:boolean = true
 if a == b
 then
 	goto endif
+
 if bool1
 then
 	goto endif
 endif:
 b = 1
 
-for var i = 0 to a
+for i = 0 to a
 do
-	i = i+1
+	while b < a
+    do
+    	b = b + 1
+    end
 end
 
 while b < a
@@ -23,9 +27,8 @@ do
 end
 
 val x = (a+b)^2* 3.2e-1 +3e+2/ 1.5+1.4/1
-val str1::string='Hello world'
+val str1:string='Hello world'
 val str2:string = ''
 val str3 = '3e-4'
-val bool3 = -1 <=>+1
+val bool3 = -1 <=+1
 val bool4= 1 >= 1
-z
