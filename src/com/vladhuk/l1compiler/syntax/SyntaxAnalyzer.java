@@ -17,10 +17,13 @@ public class SyntaxAnalyzer {
     public static void analyze(List<String> tables) {
         final List<Lexem> lexems = getLexemsFromTable(getLexemTableFromTables(tables));
 
-        if (Grammar.Program(lexems)) {
+        final Grammar grammar = new Grammar();
+
+        if (grammar.Program(lexems)) {
             System.out.println("Syntax is correct");
         } else {
             System.err.println("Syntax is wrong!");
+            grammar.showError();
         }
     }
 

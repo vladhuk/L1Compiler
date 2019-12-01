@@ -14,9 +14,13 @@ import static com.vladhuk.l1compiler.lexical.Token.*;
 
 public class Grammar {
 
-    private static final List<String> errorStack = new LinkedList<>();
+    private final List<String> errorStack = new LinkedList<>();
 
-    private static void showError(String terminalName, String description, List<Lexem> lexems) {
+    public void showError() {
+        System.err.println(errorStack.get(0));
+    }
+
+    private void showError(String terminalName, String description, List<Lexem> lexems) {
         final String lexemNames = lexems.stream()
                 .map(Lexem::getName)
                 .collect(Collectors.joining(" "));
@@ -24,22 +28,7 @@ public class Grammar {
         errorStack.add("Wrong " + terminalName + description + " on line " + lexems.get(0).getRowNumber() + ": " + lexemNames);
     }
 
-    private static int findIndexBeforeFromEnd(List<Lexem> lexems, Predicate<List<Lexem>> predicate) {
-        final LinkedList<Lexem> end = new LinkedList<>();
-        int indexOfOp = -1;
-        for (int i = lexems.size() - 1; i >= 1; i--) {
-            end.addFirst(lexems.get(i));
-
-            if (predicate.test(end)) {
-                indexOfOp = i - 1;
-                break;
-            }
-        }
-
-        return indexOfOp;
-    }
-
-    private static int findLastIndexBeforeFromEnd(List<Lexem> lexems, Predicate<List<Lexem>> predicate) {
+    private int findLastIndexBeforeFromEnd(List<Lexem> lexems, Predicate<List<Lexem>> predicate) {
         final LinkedList<Lexem> end = new LinkedList<>(lexems);
         int indexOfOp = -1;
         for (int i = 0; i < lexems.size() - 1; i++) {
@@ -54,19 +43,15 @@ public class Grammar {
         return indexOfOp;
     }
 
-    public static boolean Program(List<Lexem> lexems) {
+    public boolean Program(List<Lexem> lexems) {
+        errorStack.clear();
         if (lexems.size() == 0) {
             return false;
         }
-        if (StatementList(lexems)) {
-            return true;
-        } else {
-            System.err.println(errorStack.get(0));
-            return false;
-        }
+        return StatementList(lexems);
     }
 
-    public static boolean StatementList(List<Lexem> lexems) {
+    public boolean StatementList(List<Lexem> lexems) {
         final List<List<Lexem>> splitBySameRowLexems = new ArrayList<>();
 
         splitBySameRowLexems.add(new ArrayList<>(Collections.singletonList(lexems.get(0))));
@@ -102,12 +87,12 @@ public class Grammar {
         return multiplyRowStatement.isEmpty();
     }
 
-    public static boolean Statement(List<Lexem> lexems) {
+    public boolean Statement(List<Lexem> lexems) {
         return Declaration(lexems) || ConstantDefinition(lexems) || Assign(lexems)
                 || Loop(lexems) || Condition(lexems) || Goto(lexems) || LabelMark(lexems);
     }
 
-    public static boolean Declaration(List<Lexem> lexems) {
+    public boolean Declaration(List<Lexem> lexems) {
         if (lexems.get(0).getToken() != DECLARATION) {
             return false;
         }
@@ -167,15 +152,15 @@ public class Grammar {
         return false;
     }
 
-    public static boolean Identifier(List<Lexem> lexems) {
+    public boolean Identifier(List<Lexem> lexems) {
         return lexems.size() == 1 && lexems.get(0).getToken() == IDENTIFIER;
     }
 
-    public static boolean Expression(List<Lexem> lexems) {
+    public boolean Expression(List<Lexem> lexems) {
         return ArithmExpression(lexems) || BoolExpression(lexems) || String(lexems);
     }
 
-    public static boolean BoolExpression(List<Lexem> lexems) {
+    public boolean BoolExpression(List<Lexem> lexems) {
         if (Boolean(lexems) || Identifier(lexems)) {
             return true;
         }
@@ -184,7 +169,7 @@ public class Grammar {
             return false;
         }
 
-        final int indexOfRelOp = findLastIndexBeforeFromEnd(lexems, Grammar::ArithmExpression);
+        final int indexOfRelOp = findLastIndexBeforeFromEnd(lexems, this::ArithmExpression);
 
         if (indexOfRelOp == -1) {
             return false;
@@ -197,7 +182,7 @@ public class Grammar {
         return ArithmExpression(lexems.subList(0, indexOfRelOp));
     }
 
-    public static boolean ArithmExpression(List<Lexem> lexems) {
+    public boolean ArithmExpression(List<Lexem> lexems) {
         final boolean sign = lexems.size() > 1 && lexems.get(0).getToken() == ADD_OP;
 
         final boolean term = sign
@@ -212,7 +197,7 @@ public class Grammar {
             return false;
         }
 
-        final int indexOfAddOp = findLastIndexBeforeFromEnd(lexems, Grammar::Term);
+        final int indexOfAddOp = findLastIndexBeforeFromEnd(lexems, this::Term);
 
         if (indexOfAddOp == -1) {
             return false;
@@ -228,7 +213,7 @@ public class Grammar {
         return ArithmExpression(lexems.subList(0, indexOfAddOp));
     }
 
-    public static boolean Term(List<Lexem> lexems) {
+    public boolean Term(List<Lexem> lexems) {
         if (Factor(lexems)) {
             return true;
         }
@@ -237,7 +222,7 @@ public class Grammar {
             return false;
         }
 
-        int indexOfMultOp = findLastIndexBeforeFromEnd(lexems, Grammar::Factor);
+        int indexOfMultOp = findLastIndexBeforeFromEnd(lexems, this::Factor);
 
         if (indexOfMultOp == -1) {
             return false;
@@ -253,7 +238,7 @@ public class Grammar {
         return Term(lexems.subList(0, indexOfMultOp));
     }
 
-    public static boolean Factor(List<Lexem> lexems) {
+    public boolean Factor(List<Lexem> lexems) {
         final boolean brackets = lexems.size() >= 3
                 && lexems.get(0).getToken() == BRACKET_OP
                 && lexems.get(lexems.size() - 1).getToken() == BRACKET_OP;
@@ -265,11 +250,11 @@ public class Grammar {
         return Identifier(lexems) || UnsignedNumber(lexems);
     }
 
-    public static boolean SignedNumber(List<Lexem> lexems) {
+    public boolean SignedNumber(List<Lexem> lexems) {
         return SignedInteger(lexems) || SignedReal(lexems);
     }
 
-    public static boolean SignedReal(List<Lexem> lexems) {
+    public boolean SignedReal(List<Lexem> lexems) {
         final boolean sign = lexems.size() > 1 && lexems.get(0).getToken() == ADD_OP;
 
         return sign
@@ -277,7 +262,7 @@ public class Grammar {
                 : UnsignedReal(lexems.subList(0, lexems.size()));
     }
 
-    public static boolean SignedInteger(List<Lexem> lexems) {
+    public boolean SignedInteger(List<Lexem> lexems) {
         final boolean sign = lexems.size() > 1 && lexems.get(0).getToken() == ADD_OP;
 
         return sign
@@ -285,54 +270,54 @@ public class Grammar {
                 : UnsignedInteger(lexems.subList(0, lexems.size()));
     }
 
-    public static boolean UnsignedNumber(List<Lexem> lexems) {
+    public boolean UnsignedNumber(List<Lexem> lexems) {
         return UnsignedInteger(lexems) || UnsignedReal(lexems);
     }
 
-    public static boolean UnsignedReal(List<Lexem> lexems) {
+    public boolean UnsignedReal(List<Lexem> lexems) {
         return lexems.size() == 1
                 && lexems.get(0).getToken() == CONSTANT
                 && lexems.get(0).getName().matches("\\d+(((\\.\\d+)?e[+-]\\d+)|(\\.\\d+))");
     }
 
-    public static boolean UnsignedInteger(List<Lexem> lexems) {
+    public boolean UnsignedInteger(List<Lexem> lexems) {
         return lexems.size() == 1
                 && lexems.get(0).getToken() == CONSTANT
                 && lexems.get(0).getName().matches("\\d+");
     }
 
-    public static boolean Boolean(List<Lexem> lexems) {
+    public boolean Boolean(List<Lexem> lexems) {
         return lexems.size() == 1
                 && lexems.get(0).getToken() == CONSTANT
                 && lexems.get(0).getName().matches("true|false");
     }
 
-    public static boolean String(List<Lexem> lexems) {
+    public boolean String(List<Lexem> lexems) {
         return lexems.size() == 1
                 && lexems.get(0).getToken() == CONSTANT
                 && lexems.get(0).getName().matches("'[^']*'");
     }
 
-    public static boolean Assign(List<Lexem> lexems) {
+    public boolean Assign(List<Lexem> lexems) {
         return lexems.size() >= 3
                 && lexems.get(0).getToken() == IDENTIFIER
                 && lexems.get(1).getToken() == ASSIGN
                 && Expression(lexems.subList(2, lexems.size()));
     }
 
-    public static boolean ConstantDefinition(List<Lexem> lexems) {
+    public boolean ConstantDefinition(List<Lexem> lexems) {
         return lexems.size() == 3
                 && lexems.get(0).getToken() == IDENTIFIER
                 && lexems.get(1).getToken() == ASSIGN
                 && lexems.get(2).getToken() == CONSTANT;
     }
 
-    public static boolean Loop(List<Lexem> lexems) {
+    public boolean Loop(List<Lexem> lexems) {
         if (lexems.get(0).getToken() != LOOP) {
             return false;
         }
 
-        final int lastIndexOfLoopStatement = findLastIndexBeforeFromEnd(lexems, Grammar::LoopStatements);
+        final int lastIndexOfLoopStatement = findLastIndexBeforeFromEnd(lexems, this::LoopStatements);
 
         if (lastIndexOfLoopStatement == -1) {
             return false;
@@ -348,7 +333,7 @@ public class Grammar {
         }
     }
 
-    public static boolean ForLoop(List<Lexem> lexems) {
+    public boolean ForLoop(List<Lexem> lexems) {
         if (lexems.size() < 4) {
             return false;
         }
@@ -357,7 +342,7 @@ public class Grammar {
             return false;
         }
 
-        final int indexOfTo = findLastIndexBeforeFromEnd(lexems, Grammar::ArithmExpression);
+        final int indexOfTo = findLastIndexBeforeFromEnd(lexems, this::ArithmExpression);
 
         if (indexOfTo == -1) {
             return false;
@@ -372,7 +357,7 @@ public class Grammar {
         return Declaration(assigningLexems) || Assign(assigningLexems);
     }
 
-    public static boolean WhileLoop(List<Lexem> lexems) {
+    public boolean WhileLoop(List<Lexem> lexems) {
         if (lexems.size() < 2 || !lexems.get(0).getName().equals("while")) {
             return false;
         }
@@ -385,7 +370,7 @@ public class Grammar {
         }
     }
 
-    public static boolean LoopStatements(List<Lexem> lexems) {
+    public boolean LoopStatements(List<Lexem> lexems) {
         if (!lexems.get(0).getName().equals("do")) {
             showError("loop statements", "expected keyword 'do'", lexems);
             return false;
@@ -399,7 +384,7 @@ public class Grammar {
         return StatementList(lexems.subList(1, lexems.size() - 1));
     }
 
-    public static boolean Condition(List<Lexem> lexems) {
+    public boolean Condition(List<Lexem> lexems) {
         if (lexems.size() < 4) {
             return false;
         }
@@ -421,7 +406,7 @@ public class Grammar {
         return BoolExpression(lexems.subList(1, lexems.size() - 3));
     }
 
-    public static boolean Goto(List<Lexem> lexems) {
+    public boolean Goto(List<Lexem> lexems) {
         if (lexems.get(0).getToken() != JUMP) {
             return false;
         }
@@ -434,11 +419,11 @@ public class Grammar {
         }
     }
 
-    public static boolean Mark(List<Lexem> lexems) {
+    public boolean Mark(List<Lexem> lexems) {
         return Identifier(lexems);
     }
 
-    public static boolean LabelMark(List<Lexem> lexems) {
+    public boolean LabelMark(List<Lexem> lexems) {
         return lexems.size() == 2
                 && Mark(lexems.subList(0, lexems.size() - 1))
                 && lexems.get(lexems.size() - 1).getName().equals(":");
