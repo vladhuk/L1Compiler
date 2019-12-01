@@ -20,7 +20,7 @@ public class Grammar {
         System.err.println(errorStack.get(0));
     }
 
-    private void showError(String terminalName, String description, List<Lexem> lexems) {
+    private void pushError(String terminalName, String description, List<Lexem> lexems) {
         final String lexemNames = lexems.stream()
                 .map(Lexem::getName)
                 .collect(Collectors.joining(" "));
@@ -98,14 +98,14 @@ public class Grammar {
         }
 
         if (lexems.size() < 4) {
-            showError("declaration", "", lexems);
+            pushError("declaration", "", lexems);
             return false;
         }
 
         final boolean identifier = lexems.get(1).getToken() == IDENTIFIER;
 
         if (!identifier) {
-            showError("declaration", "expected correct identifier", lexems);
+            pushError("declaration", "expected correct identifier", lexems);
             return false;
         }
 
@@ -133,7 +133,7 @@ public class Grammar {
             if (assigning) {
                 return true;
             } else {
-                showError("declaration", "expected assigning in val declaration", lexems);
+                pushError("declaration", "expected assigning in val declaration", lexems);
                 return false;
             }
         }
@@ -144,7 +144,7 @@ public class Grammar {
             } else if (typeDefinition && emptyAssign) {
                 return true;
             } else {
-                showError("declaration", "expected type when variable is not initialized", lexems);
+                pushError("declaration", "expected type when variable is not initialized", lexems);
                 return false;
             }
         }
@@ -206,7 +206,7 @@ public class Grammar {
         final boolean addOp = lexems.get(indexOfAddOp).getToken() == ADD_OP;
 
         if (!addOp) {
-            showError("arithmetical expression", "", lexems);
+            pushError("arithmetical expression", "", lexems);
             return false;
         }
 
@@ -328,7 +328,7 @@ public class Grammar {
         if (WhileLoop(loopStatement) || ForLoop(loopStatement)) {
             return true;
         } else {
-            showError("loop", "", lexems);
+            pushError("loop", "", lexems);
             return false;
         }
     }
@@ -365,19 +365,19 @@ public class Grammar {
         if (BoolExpression(lexems.subList(1, lexems.size()))) {
             return true;
         } else {
-            showError("while loop", "wrong bool expression", lexems);
+            pushError("while loop", "wrong bool expression", lexems);
             return false;
         }
     }
 
     public boolean LoopStatements(List<Lexem> lexems) {
         if (!lexems.get(0).getName().equals("do")) {
-            showError("loop statements", "expected keyword 'do'", lexems);
+            pushError("loop statements", "expected keyword 'do'", lexems);
             return false;
         }
 
         if (!lexems.get(lexems.size() - 1).getName().equals("end")) {
-            showError("loop statements", "expected keyword 'end'", lexems);
+            pushError("loop statements", "expected keyword 'end'", lexems);
             return false;
         }
 
@@ -394,12 +394,12 @@ public class Grammar {
         }
 
         if (!Goto(lexems.subList(lexems.size() - 2, lexems.size()))) {
-            showError("goto", "", lexems);
+            pushError("goto", "", lexems);
             return false;
         }
 
         if (!lexems.get(lexems.size() - 3).getName().equals("then")) {
-            showError("condition", "expected 'then'", lexems);
+            pushError("condition", "expected 'then'", lexems);
             return false;
         }
 
@@ -414,7 +414,7 @@ public class Grammar {
         if (Mark(lexems.subList(1, lexems.size()))) {
             return true;
         } else {
-            showError("goto", "wrong mark", lexems);
+            pushError("goto", "wrong mark", lexems);
             return false;
         }
     }
