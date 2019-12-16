@@ -16,7 +16,6 @@ public enum State {
     STRING,
     ARITHM_OR_BOOL_SIGN,
     ARITHM_SIGN,
-    UNARY_SIGN,
     BOOL_SIGN,
     CLOSE_BRACKET,
     CLOSE_BRACKET_ARITHM,
