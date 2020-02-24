@@ -1,0 +1,44 @@
+grammar L1;
+
+statementList: (statement EOL+)*;
+statement: declaration | constantDefinition | assign | loop | condition | goto1 | labelMark;
+declaration: varDeclaration | valDeclaration;
+varDeclaration: 'var' identifier ((':' type)? '=' expression | ':' type ('=' expression)?);
+valDeclaration: 'val' identifier (':' type)? '=' expression;
+identifier: Letter (Letter | Digit)*;
+type: 'number' | 'string' | 'boolean';
+expression: arithmExpression | boolExpression | string;
+boolExpression: (arithmExpression RelOp)? arithmExpression | Boolean;
+arithmExpression: Sign? term | arithmExpression '+' term | arithmExpression '-' term;
+term: factor | term '*' factor | term '/' factor | term '^' factor;
+factor: identifier | signedNumber | '(' arithmExpression ')';
+signedNumber: signedInteger | signedReal;
+signedReal: Sign? unsignedReal;
+signedInteger: Sign? unsignedInteger;
+unsignedNumber: unsignedInteger | unsignedReal;
+unsignedReal: digitSequence ('.' fractionalPart)? ('e' scaleFactor)?;
+unsignedInteger: digitSequence;
+fractionalPart: digitSequence;
+scaleFactor: Sign? digitSequence;
+digitSequence: Digit+;
+string: '\'' ~('\'')* '\'';
+assign: identifier '=' expression;
+constantDefinition: identifier '=' constant;
+constant: Sign? ( unsignedNumber | identifier ) | string;
+loop: (forLoop | whileLoop) EOL* loopStatements;
+forLoop: 'for' (declaration | assign) 'to' arithmExpression;
+whileLoop: 'while' boolExpression;
+loopStatements: 'do' EOL+ statementList 'end';
+condition: 'if' boolExpression EOL* 'then' EOL* goto1;
+goto1: 'goto' mark;
+mark: identifier;
+labelMark: mark ':';
+
+RelOp: '==' | '<=' | '<' | '>' | '>=' | '!=';
+Sign: '+' | '-';
+Boolean: 'true' | 'false';
+Letter: 'a'..'z';
+Digit: '0'..'9';
+
+EOL: '\n'+;
+WS : [ \r\t] -> skip;
