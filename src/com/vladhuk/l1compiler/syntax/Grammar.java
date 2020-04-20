@@ -1,6 +1,8 @@
 package com.vladhuk.l1compiler.syntax;
 
 import com.vladhuk.l1compiler.lexical.Lexem;
+import com.vladhuk.l1compiler.lexical.Pair;
+import com.vladhuk.l1compiler.rpn.DijkstrasParser;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,8 +18,19 @@ public class Grammar {
 
     private final List<String> errorStack = new LinkedList<>();
 
+    private List<Pair> identifiers;
+    private LinkedList<Lexem> rpn = new LinkedList<>();
+
     public void showError() {
         System.err.println(errorStack.get(0));
+    }
+
+    public void setIdentifiers(List<Pair> identifiers) {
+        this.identifiers = identifiers;
+    }
+
+    public List<Lexem> getRpn() {
+        return rpn;
     }
 
     private void pushError(String terminalName, String description, List<Lexem> lexems) {
@@ -102,9 +115,10 @@ public class Grammar {
             return false;
         }
 
-        final boolean identifier = lexems.get(1).getToken() == IDENTIFIER;
+        final Lexem identifier = lexems.get(1);
+        final boolean existsIdentifier = identifier.getToken() == IDENTIFIER;
 
-        if (!identifier) {
+        if (!existsIdentifier) {
             pushError("declaration", "expected correct identifier", lexems);
             return false;
         }
@@ -112,9 +126,13 @@ public class Grammar {
         final boolean typeDefinition = lexems.get(2).getName().equals(":")
                 && lexems.get(3).getToken() == TYPE;
 
+        final Lexem assignSymbol = typeDefinition && lexems.size() >= 5
+                ? lexems.get(4)
+                : lexems.get(2);
+
         final boolean assign = typeDefinition
-                ? lexems.size() >= 5 && lexems.get(4).getToken() == ASSIGN
-                : lexems.get(2).getToken() == ASSIGN;
+                ? assignSymbol.getToken() == ASSIGN
+                : assignSymbol.getToken() == ASSIGN;
 
         final List<Lexem> afterAssign = typeDefinition
                 ? lexems.size() >= 5 ? lexems.subList(5, lexems.size()) : null
@@ -122,9 +140,33 @@ public class Grammar {
 
         final boolean assigning = assign && (Expression(afterAssign) || Identifier(afterAssign));
 
-        final boolean emptyAssign = typeDefinition
-                ? lexems.size() == 4
-                : lexems.size() == 2;
+        if (assigning) {
+            final List<Lexem> infixExp = new ArrayList<>();
+            infixExp.add(lexems.get(0));
+            infixExp.add(identifier);
+            infixExp.add(assignSymbol);
+            infixExp.addAll(afterAssign);
+            rpn.addAll(DijkstrasParser.convertInfixToRpn(infixExp));
+        }
+
+        final Pair identifierPair = identifiers.get(identifier.getIndex());
+
+        if (assigning && !typeDefinition) {
+            if (String(afterAssign)) {
+                identifierPair.setType(Pair.Type.STRING);
+            } else if (BoolExpression(afterAssign)) {
+                identifierPair.setType(Pair.Type.BOOLEAN);
+            } else {
+                identifierPair.setType(Pair.Type.NUMBER);
+            }
+        } else if (typeDefinition) {
+            final Lexem typeLexem = lexems.get(3);
+            final Pair.Type type = typeLexem.getName().equals("string")
+                    ? Pair.Type.STRING
+                    : typeLexem.getName().equals("boolean")
+                        ? Pair.Type.BOOLEAN : Pair.Type.NUMBER;
+            identifierPair.setType(type);
+        }
 
         final boolean val = lexems.get(0).getName().equals("val");
         final boolean var = lexems.get(0).getName().equals("var");
@@ -141,7 +183,7 @@ public class Grammar {
         if (var) {
             if (assigning) {
                 return true;
-            } else if (typeDefinition && emptyAssign) {
+            } else if (typeDefinition) {
                 return true;
             } else {
                 pushError("declaration", "expected type when variable is not initialized", lexems);
@@ -299,10 +341,16 @@ public class Grammar {
     }
 
     public boolean Assign(List<Lexem> lexems) {
-        return lexems.size() >= 3
+        final boolean assign =  lexems.size() >= 3
                 && lexems.get(0).getToken() == IDENTIFIER
                 && lexems.get(1).getToken() == ASSIGN
                 && Expression(lexems.subList(2, lexems.size()));
+
+        if (assign) {
+            rpn.addAll(DijkstrasParser.convertInfixToRpn(lexems));
+        }
+
+        return assign;
     }
 
     public boolean ConstantDefinition(List<Lexem> lexems) {
@@ -424,9 +472,15 @@ public class Grammar {
     }
 
     public boolean LabelMark(List<Lexem> lexems) {
-        return lexems.size() == 2
+        final boolean isLabelMark = lexems.size() == 2
                 && Mark(lexems.subList(0, lexems.size() - 1))
                 && lexems.get(lexems.size() - 1).getName().equals(":");
+
+        if (isLabelMark) {
+            identifiers.get(lexems.get(0).getIndex()).setType(Pair.Type.MARK);
+        }
+
+        return isLabelMark;
     }
 
 }
