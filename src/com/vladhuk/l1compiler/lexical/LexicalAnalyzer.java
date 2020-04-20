@@ -1,5 +1,7 @@
 package com.vladhuk.l1compiler.lexical;
 
+import com.vladhuk.l1compiler.util.Util;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,12 +22,12 @@ public class LexicalAnalyzer {
         final Set<Pair> constantsTable = addLexemIndexesAndGetPairTable(lexemsTable, CONSTANT);
         final Set<Pair> identifiersTable = addLexemIndexesAndGetPairTable(lexemsTable, IDENTIFIER);
 
-        return "-----\n" +
-                tableToString(lexemsTable) +
+        return Util.tableToString(lexemsTable) +
                 "\n-----\n" +
-                tableToString(constantsTable) +
+                Util.tableToString(constantsTable) +
                 "\n-----\n" +
-                tableToString(identifiersTable);
+                Util.tableToString(identifiersTable) +
+                "\n-----";
     }
 
     private static List<Lexem> createLexemsTable(List<String> rows) {
@@ -69,7 +71,19 @@ public class LexicalAnalyzer {
         final Set<Pair> pairTable = new LinkedHashSet<>();
         for (Lexem lexem : lexemsTable) {
             if (lexem.getToken() == pairType) {
-                pairTable.add(new Pair(lexem.getName()));
+                final Pair pair = new Pair();
+                pair.setName(lexem.getName());
+                if (pairType == CONSTANT) {
+                    if (lexem.getName().matches("true|false")) {
+                        pair.setType(Pair.Type.BOOLEAN);
+                    } else if (lexem.getName().startsWith("'")) {
+                        pair.setType(Pair.Type.STRING);
+                    } else {
+                        pair.setType(Pair.Type.NUMBER);
+                    }
+                    pair.setValue(lexem.getName());
+                }
+                pairTable.add(pair);
             }
         }
 
@@ -89,12 +103,6 @@ public class LexicalAnalyzer {
         });
 
         return pairTable;
-    }
-
-    private static String tableToString(Collection<?> table) {
-        return table.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining("\n"));
     }
 
     public static void parse(Path source, Path destination) throws IOException {

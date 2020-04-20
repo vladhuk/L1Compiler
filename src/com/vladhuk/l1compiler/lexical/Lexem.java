@@ -20,6 +20,10 @@ public class Lexem {
         this.index = index;
     }
 
+    public Lexem(Lexem lexem) {
+        this(lexem.getRowNumber(), lexem.getName(), lexem.getToken(), lexem.getIndex());
+    }
+
     @Override
     public String toString() {
         return String.format("%-7d %-15s %-15s %s", rowNumber, name, token.name(), index == -1 ? "" : index);
