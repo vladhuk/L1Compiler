@@ -354,10 +354,16 @@ public class Grammar {
     }
 
     public boolean ConstantDefinition(List<Lexem> lexems) {
-        return lexems.size() == 3
+        final boolean cd = lexems.size() == 3
                 && lexems.get(0).getToken() == IDENTIFIER
                 && lexems.get(1).getToken() == ASSIGN
                 && lexems.get(2).getToken() == CONSTANT;
+
+        if (cd) {
+            rpn.addAll(DijkstrasParser.convertInfixToRpn(lexems));
+        }
+
+        return cd;
     }
 
     public boolean Loop(List<Lexem> lexems) {
