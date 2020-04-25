@@ -29,9 +29,14 @@ public class Interpreter {
         interpreter.constants = Util.getPairsFromTable(tables.get(1));
         interpreter.identifiers = Util.getPairsFromTable(tables.get(2));
 
-        final List<Pair> newIdentifiers = interpreter.calculate(rpn);
+        try {
+            final List<Pair> newIdentifiers = interpreter.calculate(rpn);
+            return Util.tableToString(newIdentifiers);
+        } catch (RuntimeException e) {
+            System.err.println(e.getMessage());
+        }
 
-        return Util.tableToString(newIdentifiers);
+        return "";
     }
 
     public static void interpret(Path tables, Path destination) throws IOException {
@@ -164,7 +169,7 @@ public class Interpreter {
         final Pair identifier = identifiers.get(lexem.getIndex());
 
         if (identifier.getValue().equals(Pair.UNDEF)) {
-            throw new RuntimeException();
+            throw new RuntimeException(lexem.getRowNumber() + ": Identifier is not initialized.");
         }
 
         return createConstantIfNeeds(identifier.getValue(), identifier.getType());
@@ -200,7 +205,7 @@ public class Interpreter {
         final Pair identifier = identifiers.get(lexem.getIndex());
 
         if (!identifier.getValue().equals(Pair.UNDEF)) {
-            throw new RuntimeException();
+            throw new RuntimeException(lexem.getRowNumber() + ": Identifier already defined.");
         }
 
         identifier.setValue(Pair.DEF);
@@ -216,16 +221,17 @@ public class Interpreter {
         final Pair identifier = identifiers.get(preLast.getIndex());
 
         if (identifier.getValue().equals(Pair.UNDEF)) {
-            throw new RuntimeException();
+            throw new RuntimeException(preLast.getRowNumber() + ": Identifier is not defined.");
         }
         if (!identifier.getValue().equals(Pair.DEF) && !identifier.isModifiable()) {
-            throw new RuntimeException();
+            throw new RuntimeException(preLast.getRowNumber() + ": Can not modify constant.");
         }
 
         final Lexem lastConstant = getConstant(last);
+        final Pair lastPair = constants.get(lastConstant.getIndex());
 
-        if (identifier.getType() != constants.get(lastConstant.getIndex()).getType()) {
-            throw new RuntimeException();
+        if (identifier.getType() != lastPair.getType()) {
+            throw new RuntimeException(preLast.getRowNumber() + ": Can not assign type " + lastPair.getType() + " to type " + identifier.getType());
         }
 
         identifier.setValue(lastConstant.getName());
@@ -240,8 +246,12 @@ public class Interpreter {
         final Pair.Type type1 = constants.get(preLastConstant.getIndex()).getType();
         final Pair.Type type2 = constants.get(lastConstant.getIndex()).getType();
 
-        if (type1 != type2 || !type1.equals(Pair.Type.NUMBER)) {
-            throw new RuntimeException();
+        if (type1 != type2) {
+            throw new RuntimeException(preLast.getRowNumber() + ": Can not handle operation with different types.");
+        }
+
+        if (!type1.equals(Pair.Type.NUMBER)) {
+            throw new RuntimeException(preLast.getRowNumber() + ": Required type 'number'.");
         }
 
         final Object newValue = function.apply(Double.valueOf(preLastConstant.getName()), Double.valueOf(lastConstant.getName()));
@@ -256,8 +266,12 @@ public class Interpreter {
         final Pair.Type type1 = constants.get(preLastConstant.getIndex()).getType();
         final Pair.Type type2 = constants.get(lastConstant.getIndex()).getType();
 
-        if (type1 != type2 || !type1.equals(Pair.Type.BOOLEAN)) {
-            throw new RuntimeException();
+        if (type1 != type2) {
+            throw new RuntimeException(preLast.getRowNumber() + ": Can not handle operation with different types.");
+        }
+
+        if (!type1.equals(Pair.Type.BOOLEAN)) {
+            throw new RuntimeException(preLast.getRowNumber() + ": Required type 'boolean'.");
         }
 
         final Boolean newValue = function.apply(Boolean.valueOf(preLastConstant.getName()), Boolean.valueOf(lastConstant.getName()));
@@ -272,12 +286,12 @@ public class Interpreter {
         final Pair.Type type1 = constants.get(preLastConstant.getIndex()).getType();
         final Pair.Type type2 = constants.get(lastConstant.getIndex()).getType();
 
-        if (type1 != type2 || !type1.equals(Pair.Type.STRING)) {
-            throw new RuntimeException();
+        if (type1 != type2) {
+            throw new RuntimeException(preLast.getRowNumber() + ": Can not handle operation with different types.");
         }
 
-        if (constants.get(preLastConstant.getIndex()).getType() != constants.get(lastConstant.getIndex()).getType()) {
-            throw new RuntimeException();
+        if (!type1.equals(Pair.Type.NUMBER)) {
+            throw new RuntimeException(preLast.getRowNumber() + ": Required type 'string'.");
         }
 
         final Boolean newValue = function.apply(preLastConstant.getName(), lastConstant.getName());
@@ -287,7 +301,7 @@ public class Interpreter {
 
     private List<Lexem> handleGoto(Lexem mark, List<Lexem> symbols) {
         if (identifiers.size() > mark.getIndex() && identifiers.get(mark.getIndex()).getType() != Pair.Type.MARK) {
-            throw new RuntimeException();
+            throw new RuntimeException(mark.getRowNumber() + ": Identifier is not a mark.");
         }
 
         return findLabelMarkAndReturnNextSymbols(mark, symbols);
@@ -300,14 +314,14 @@ public class Interpreter {
             }
         }
 
-        throw new RuntimeException();
+        throw new RuntimeException("Can not find mark " + mark.getName());
     }
 
     private List<Lexem> handleIf(Lexem condition, Lexem mark, List<Lexem> allSymbols, List<Lexem> currentSymbols) {
         final Pair conditionPair = constants.get(getConstant(condition).getIndex());
 
         if (conditionPair.getType() != Pair.Type.BOOLEAN) {
-            throw new RuntimeException();
+            throw new RuntimeException(condition.getRowNumber() + ": Required type 'boolean' in codition.");
         }
 
         if (Boolean.parseBoolean(conditionPair.getValue())) {
