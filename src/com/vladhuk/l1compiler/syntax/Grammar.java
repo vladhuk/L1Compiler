@@ -2,6 +2,7 @@ package com.vladhuk.l1compiler.syntax;
 
 import com.vladhuk.l1compiler.lexical.Lexem;
 import com.vladhuk.l1compiler.lexical.Pair;
+import com.vladhuk.l1compiler.lexical.Token;
 import com.vladhuk.l1compiler.rpn.DijkstrasParser;
 
 import java.util.ArrayList;
@@ -140,14 +141,16 @@ public class Grammar {
 
         final boolean assigning = assign && (Expression(afterAssign) || Identifier(afterAssign));
 
+        final List<Lexem> infixExp = new ArrayList<>();
+        infixExp.add(lexems.get(0));
+        infixExp.add(identifier);
+
         if (assigning) {
-            final List<Lexem> infixExp = new ArrayList<>();
-            infixExp.add(lexems.get(0));
-            infixExp.add(identifier);
             infixExp.add(assignSymbol);
             infixExp.addAll(afterAssign);
-            rpn.addAll(DijkstrasParser.convertInfixToRpn(infixExp));
         }
+
+        rpn.addAll(DijkstrasParser.convertInfixToRpn(infixExp));
 
         final Pair identifierPair = identifiers.get(identifier.getIndex());
 
@@ -371,17 +374,54 @@ public class Grammar {
             return false;
         }
 
+        final int currentRpnSize = rpn.size();
+
         final int lastIndexOfLoopStatement = findLastIndexBeforeFromEnd(lexems, this::LoopStatements);
 
         if (lastIndexOfLoopStatement == -1) {
+            rpn = new LinkedList<>(rpn.subList(0, currentRpnSize));
             return false;
         }
 
         final List<Lexem> loopStatement = lexems.subList(0, lastIndexOfLoopStatement + 1);
 
+        final int beforeForRpnSize = rpn.size();
+
         if (WhileLoop(loopStatement) || ForLoop(loopStatement)) {
+
+            final LinkedList<Lexem> tempRpn = new LinkedList<>();
+            final List<String> lexemNames = lexems.stream().map(Lexem::getName).collect(Collectors.toList());
+            final int doIndex = lexemNames.indexOf("do");
+            final Lexem mark1 = new Lexem(-1, "$" + identifiers.size(), Token.IDENTIFIER, identifiers.size());
+            final Lexem mark2 = new Lexem(-1, "$" + (identifiers.size() + 1), Token.IDENTIFIER, identifiers.size());
+            identifiers.add(new Pair(mark1.getName(), Pair.Type.MARK, Pair.UNDEF, false, mark1.getIndex()));
+            identifiers.add(new Pair(mark2.getName(), Pair.Type.MARK, Pair.UNDEF, false, mark2.getIndex()));
+
+            if (lexems.get(0).getName().equals("for")) {
+                rpn = new LinkedList<>(rpn.subList(0, beforeForRpnSize));
+                final int toIndex = lexemNames.indexOf("to");
+                tempRpn.addAll(DijkstrasParser.convertInfixToRpn(lexems.subList(1, toIndex)));
+                tempRpn.add(mark1);
+                tempRpn.add(new Lexem(-1, ":", Token.PUNCT));
+                tempRpn.add(lexems.get(1).getToken() == Token.IDENTIFIER ? lexems.get(1) : lexems.get(2));
+                tempRpn.addAll(DijkstrasParser.convertInfixToRpn(lexems.subList(toIndex + 1, doIndex)));
+                tempRpn.add(new Lexem(-1, "<", Token.REL_OP));
+            } else {
+                tempRpn.add(mark1);
+                tempRpn.add(new Lexem(-1, ":", Token.PUNCT));
+                tempRpn.addAll(DijkstrasParser.convertInfixToRpn(lexems.subList(1, doIndex)));
+            }
+            tempRpn.add(mark2);
+            tempRpn.add(new Lexem(-1, "if", Token.CONDITION));
+            rpn.addAll(currentRpnSize, tempRpn);
+            rpn.add(mark1);
+            rpn.add(new Lexem(-1, "goto", Token.JUMP));
+            rpn.add(mark2);
+            rpn.add(new Lexem(-1, ":", Token.PUNCT));
+
             return true;
         } else {
+            rpn = new LinkedList<>(rpn.subList(0, currentRpnSize));
             pushError("loop", "", lexems);
             return false;
         }
@@ -447,17 +487,34 @@ public class Grammar {
             return false;
         }
 
-        if (!Goto(lexems.subList(lexems.size() - 2, lexems.size()))) {
-            pushError("goto", "", lexems);
-            return false;
-        }
-
         if (!lexems.get(lexems.size() - 3).getName().equals("then")) {
             pushError("condition", "expected 'then'", lexems);
             return false;
         }
 
-        return BoolExpression(lexems.subList(1, lexems.size() - 3));
+        final List<Lexem> boolExpression = lexems.subList(1, lexems.size() - 3);
+
+        final boolean condition = BoolExpression(boolExpression);
+
+        if (condition) {
+            rpn.addAll(DijkstrasParser.convertInfixToRpn(boolExpression));
+
+            final Lexem mark = new Lexem(-1, "$" + identifiers.size(), Token.IDENTIFIER, identifiers.size());
+            identifiers.add(new Pair(mark.getName(), Pair.Type.MARK, Pair.UNDEF, false, mark.getIndex()));
+
+            rpn.add(mark);
+            rpn.add(lexems.get(0));
+
+            if (!Goto(lexems.subList(lexems.size() - 2, lexems.size()))) {
+                pushError("goto", "", lexems);
+                return false;
+            }
+
+            rpn.add(mark);
+            rpn.add(new Lexem(-1, ":", Token.PUNCT));
+        }
+
+        return condition;
     }
 
     public boolean Goto(List<Lexem> lexems) {
@@ -466,6 +523,8 @@ public class Grammar {
         }
 
         if (Mark(lexems.subList(1, lexems.size()))) {
+            Collections.reverse(lexems);
+            rpn.addAll(lexems);
             return true;
         } else {
             pushError("goto", "wrong mark", lexems);
@@ -484,6 +543,7 @@ public class Grammar {
 
         if (isLabelMark) {
             identifiers.get(lexems.get(0).getIndex()).setType(Pair.Type.MARK);
+            rpn.addAll(lexems);
         }
 
         return isLabelMark;

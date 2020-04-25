@@ -43,7 +43,7 @@ public class Interpreter {
     }
 
     public List<Pair> calculate(List<Lexem> rpn) {
-        final LinkedList<Lexem> symbols = new LinkedList<>(rpn);
+        LinkedList<Lexem> symbols = new LinkedList<>(rpn);
 
         final LinkedList<Lexem> lastValues = new LinkedList<>();
 
@@ -58,6 +58,13 @@ public class Interpreter {
                     case "var":
                     case "val":
                         lastValues.push(handleDef(symbol.getName(), lastValues.pop()));
+                        break;
+                    case "goto":
+                        symbols = new LinkedList<>(handleGoto(lastValues.pop(), rpn));
+                        lastValues.clear();
+                        break;
+                    case ":":
+                        lastValues.pop();
                         break;
                 }
             } else if (isBinaryOperator(symbol.getName())) {
@@ -128,6 +135,10 @@ public class Interpreter {
                     case "=":
                         lastValues.push(handleAssign(preLast, last));
                         break;
+                    case "if":
+                        symbols = new LinkedList<>(handleIf(preLast, last, rpn, symbols));
+                        lastValues.clear();
+                        break;
                 }
             } else {
                 lastValues.push(symbol);
@@ -138,11 +149,11 @@ public class Interpreter {
     }
 
     private boolean isBinaryOperator(String symbol) {
-        return symbol.matches("[=+\\-*/^<>]|==|!=|<=|>=");
+        return symbol.matches("[=+\\-*/^<>]|==|!=|<=|>=|if|for");
     }
 
     private boolean isUnaryOperator(String symbol) {
-        return symbol.matches("@|var|val");
+        return symbol.matches("[@:]|var|val|goto");
     }
 
     private Lexem getConstant(Lexem lexem) {
@@ -272,6 +283,38 @@ public class Interpreter {
         final Boolean newValue = function.apply(preLastConstant.getName(), lastConstant.getName());
 
         return createConstantIfNeeds(String.valueOf(newValue), Pair.Type.BOOLEAN);
+    }
+
+    private List<Lexem> handleGoto(Lexem mark, List<Lexem> symbols) {
+        if (identifiers.size() > mark.getIndex() && identifiers.get(mark.getIndex()).getType() != Pair.Type.MARK) {
+            throw new RuntimeException();
+        }
+
+        return findLabelMarkAndReturnNextSymbols(mark, symbols);
+    }
+
+    private List<Lexem> findLabelMarkAndReturnNextSymbols(Lexem mark, List<Lexem> symbols) {
+        for (int i = 0; i < symbols.size() - 1; i++) {
+            if (symbols.get(i).equals(mark) && symbols.get(i + 1).getName().equals(":")) {
+                return symbols.subList(i + 2, symbols.size());
+            }
+        }
+
+        throw new RuntimeException();
+    }
+
+    private List<Lexem> handleIf(Lexem condition, Lexem mark, List<Lexem> allSymbols, List<Lexem> currentSymbols) {
+        final Pair conditionPair = constants.get(getConstant(condition).getIndex());
+
+        if (conditionPair.getType() != Pair.Type.BOOLEAN) {
+            throw new RuntimeException();
+        }
+
+        if (Boolean.parseBoolean(conditionPair.getValue())) {
+            return currentSymbols;
+        }
+
+        return findLabelMarkAndReturnNextSymbols(mark, allSymbols);
     }
 
 }
