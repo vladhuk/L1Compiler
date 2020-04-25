@@ -1,5 +1,8 @@
 package com.vladhuk.l1compiler.lexical;
 
+import java.util.Objects;
+
+
 public class Lexem {
 
     private int rowNumber;
@@ -27,6 +30,21 @@ public class Lexem {
     @Override
     public String toString() {
         return String.format("%-7d %-15s %-15s %s", rowNumber, name, token.name(), index == -1 ? "" : index);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Lexem lexem = (Lexem) o;
+        return index == lexem.index &&
+                Objects.equals(name, lexem.name) &&
+                token == lexem.token;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, token, index);
     }
 
     public int getRowNumber() {
