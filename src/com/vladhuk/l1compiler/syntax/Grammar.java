@@ -393,7 +393,7 @@ public class Grammar {
             final List<String> lexemNames = lexems.stream().map(Lexem::getName).collect(Collectors.toList());
             final int doIndex = lexemNames.indexOf("do");
             final Lexem mark1 = new Lexem(-1, "$" + identifiers.size(), Token.IDENTIFIER, identifiers.size());
-            final Lexem mark2 = new Lexem(-1, "$" + (identifiers.size() + 1), Token.IDENTIFIER, identifiers.size());
+            final Lexem mark2 = new Lexem(-1, "$" + (identifiers.size() + 1), Token.IDENTIFIER, (identifiers.size() + 1));
             identifiers.add(new Pair(mark1.getName(), Pair.Type.MARK, Pair.UNDEF, false, mark1.getIndex()));
             identifiers.add(new Pair(mark2.getName(), Pair.Type.MARK, Pair.UNDEF, false, mark2.getIndex()));
 
