@@ -59,7 +59,7 @@ public class DijkstrasParser {
         }
 
         for (int i = 0; i < symbolsCopy.size() - 1; i++) {
-            if (isArithmOperator(symbolsCopy.get(i)) && symbolsCopy.get(i + 1).getName().equals("-")) {
+            if (isOperator(symbolsCopy.get(i)) && symbolsCopy.get(i + 1).getName().equals("-")) {
                 symbolsCopy.get(i + 1).setName("@");
             }
         }
