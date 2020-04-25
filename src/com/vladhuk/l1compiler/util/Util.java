@@ -55,6 +55,7 @@ public class Util {
 
     public static List<Pair> getPairsFromTable(List<String> table) {
         return table.stream()
+                .filter(str -> !str.isBlank())
                 .map(row -> {
                     final List<String> elements = Util.splitIncludingDelimiters(row, STRING_DELIMITER).stream()
                             .filter(str -> !str.isBlank())
