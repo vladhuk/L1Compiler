@@ -24,9 +24,7 @@ public class SyntaxAnalyzer {
         grammar.setIdentifiers(identifiers);
 
         final boolean isSyntaxCorrect = grammar.Program(lexems);
-        if (isSyntaxCorrect) {
-            System.out.println("Syntax is correct");
-        } else {
+        if (!isSyntaxCorrect) {
             System.err.println("Syntax is wrong!");
             grammar.showError();
         }
