@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -70,6 +71,12 @@ public class Interpreter {
                         break;
                     case ":":
                         lastValues.pop();
+                        break;
+                    case "in":
+                        handleIn(lastValues.pop());
+                        break;
+                    case "out":
+                        handleOut(lastValues.pop());
                         break;
                 }
             } else if (isBinaryOperator(symbol.getName())) {
@@ -158,7 +165,7 @@ public class Interpreter {
     }
 
     private boolean isUnaryOperator(String symbol) {
-        return symbol.matches("[@:]|var|val|goto");
+        return symbol.matches("[@:]|var|val|goto|in|out");
     }
 
     private Lexem getConstant(Lexem lexem) {
@@ -168,6 +175,12 @@ public class Interpreter {
 
         final Pair identifier = identifiers.get(lexem.getIndex());
 
+        if (identifier.getType() == Pair.Type.UNDEF) {
+            throw new RuntimeException(lexem.getRowNumber() + ": Identifier is not defined.");
+        }
+        if (identifier.getType() == Pair.Type.MARK) {
+            throw new RuntimeException(lexem.getRowNumber() + ": Can not get value of mark.");
+        }
         if (identifier.getValue().equals(Pair.UNDEF)) {
             throw new RuntimeException(lexem.getRowNumber() + ": Identifier is not initialized.");
         }
@@ -204,6 +217,9 @@ public class Interpreter {
     private Lexem handleDef(String defType, Lexem lexem) {
         final Pair identifier = identifiers.get(lexem.getIndex());
 
+        if (identifier.getType() == Pair.Type.MARK) {
+            throw new RuntimeException(lexem.getRowNumber() + ": Already exists mark with this name.");
+        }
         if (!identifier.getValue().equals(Pair.UNDEF)) {
             throw new RuntimeException(lexem.getRowNumber() + ": Identifier already defined.");
         }
@@ -329,6 +345,37 @@ public class Interpreter {
         }
 
         return findLabelMarkAndReturnNextSymbols(mark, allSymbols);
+    }
+
+    private void handleIn(Lexem last) {
+        final Pair identifier = identifiers.get(last.getIndex());
+
+        if (!identifier.getValue().equals(Pair.DEF) && !identifier.isModifiable()) {
+            throw new RuntimeException(last.getRowNumber() + ": Can not modify constant.");
+        }
+
+        final Scanner scanner = new Scanner(System.in);
+
+        switch (identifier.getType()) {
+            case STRING:
+                identifier.setValue(String.format("'%s'", scanner.next()));
+                break;
+            case BOOLEAN:
+                identifier.setValue(String.valueOf(scanner.nextBoolean()));
+                break;
+            case NUMBER:
+                identifier.setValue(String.valueOf(scanner.nextInt()));
+                break;
+        }
+    }
+
+    private void handleOut(Lexem last) {
+        final Pair constant = constants.get(getConstant(last).getIndex());
+
+        final String valueForOut = constant.getType() == Pair.Type.STRING
+                ? constant.getValue().substring(1, constant.getValue().length() - 1)
+                : constant.getValue();
+        System.out.println(valueForOut);
     }
 
 }

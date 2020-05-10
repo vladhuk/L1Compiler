@@ -26,6 +26,11 @@ public enum Token {
             return "goto";
         }
     },
+    IO {
+        public String getRegex() {
+            return "in|out";
+        }
+    },
     TYPE {
         public String getRegex() {
             return "number|boolean|string";

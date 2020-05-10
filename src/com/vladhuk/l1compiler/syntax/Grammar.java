@@ -103,7 +103,7 @@ public class Grammar {
 
     public boolean Statement(List<Lexem> lexems) {
         return Declaration(lexems) || ConstantDefinition(lexems) || Assign(lexems)
-                || Loop(lexems) || Condition(lexems) || Goto(lexems) || LabelMark(lexems);
+                || Loop(lexems) || Condition(lexems) || Goto(lexems) || IO(lexems) || LabelMark(lexems);
     }
 
     public boolean Declaration(List<Lexem> lexems) {
@@ -167,7 +167,7 @@ public class Grammar {
             final Pair.Type type = typeLexem.getName().equals("string")
                     ? Pair.Type.STRING
                     : typeLexem.getName().equals("boolean")
-                        ? Pair.Type.BOOLEAN : Pair.Type.NUMBER;
+                    ? Pair.Type.BOOLEAN : Pair.Type.NUMBER;
             identifierPair.setType(type);
         }
 
@@ -344,7 +344,7 @@ public class Grammar {
     }
 
     public boolean Assign(List<Lexem> lexems) {
-        final boolean assign =  lexems.size() >= 3
+        final boolean assign = lexems.size() >= 3
                 && lexems.get(0).getToken() == IDENTIFIER
                 && lexems.get(1).getToken() == ASSIGN
                 && Expression(lexems.subList(2, lexems.size()));
@@ -528,6 +528,27 @@ public class Grammar {
             return true;
         } else {
             pushError("goto", "wrong mark", lexems);
+            return false;
+        }
+    }
+
+    public boolean IO(List<Lexem> lexems) {
+        if (lexems.get(0).getToken() != IO) {
+            return false;
+        }
+
+        if (lexems.size() == 2 &&
+                (
+                        (lexems.get(0).getName().equals("out") && (lexems.get(1).getToken() == CONSTANT || Identifier(lexems.subList(1, lexems.size()))))
+                                || lexems.get(0).getName().equals("in") && Identifier(lexems.subList(1, lexems.size()))
+                )
+
+        ) {
+            Collections.reverse(lexems);
+            rpn.addAll(lexems);
+            return true;
+        } else {
+            pushError("IO", "wrong identifier", lexems);
             return false;
         }
     }
