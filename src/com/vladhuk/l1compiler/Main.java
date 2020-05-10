@@ -10,22 +10,20 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        final File source = new File(Main.class.getClassLoader().getResource("resources/test-src/L1_source.txt").getPath());
-        final File lexems = new File("L1_lexems.txt");
-        final File translation = new File("L1_translation.txt");
-        final File interpretation = new File("L1_interpretation.txt");
+        final File source = args.length > 0
+            ? new File(args[0])
+            : new File(Main.class.getClassLoader().getResource("resources/test-src/L1_source.txt").getPath());
 
-        if (!lexems.exists()) {
-            lexems.createNewFile();
-        }
+        final File outDir = new File("out");
+        outDir.mkdir();
 
-        if (!translation.exists()) {
-            translation.createNewFile();
-        }
+        final File lexems = outDir.toPath().resolve("L1_lexems.txt").toFile();
+        final File translation = outDir.toPath().resolve("L1_translation.txt").toFile();
+        final File interpretation = outDir.toPath().resolve("L1_interpretation.txt").toFile();
 
-        if (!interpretation.exists()) {
-            interpretation.createNewFile();
-        }
+        lexems.createNewFile();
+        translation.createNewFile();
+        interpretation.createNewFile();
 
         LexicalAnalyzer.parse(source, lexems);
         SyntaxAnalyzer.analyze(lexems, translation);
