@@ -358,7 +358,7 @@ public class Interpreter {
 
         switch (identifier.getType()) {
             case STRING:
-                identifier.setValue(String.format("'%s'", scanner.next()));
+                identifier.setValue(String.format("'%s'", scanner.nextLine()));
                 break;
             case BOOLEAN:
                 identifier.setValue(String.valueOf(scanner.nextBoolean()));
