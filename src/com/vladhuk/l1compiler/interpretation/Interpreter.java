@@ -210,7 +210,8 @@ public class Interpreter {
 
     private Lexem handleUnaryMinus(Lexem lastValue) {
         final Lexem constant = getConstant(lastValue);
-        constant.setName(String.valueOf(Double.valueOf("-" + constant.getName())));
+        final double value = Double.valueOf(constant.getName());
+        constant.setName(value < 0 ? String.valueOf(Math.abs(value)) : ("-" + value));
         return constant;
     }
 
